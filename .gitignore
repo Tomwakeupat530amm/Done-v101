@@ -1,0 +1,12 @@
+node_modules
+dist
+out
+build
+.env
+.env.*
+*.db
+*.db-journal
+.DS_Store
+.eslintcache
+*.log*
+
