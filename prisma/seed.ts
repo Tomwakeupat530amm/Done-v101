@@ -2,7 +2,7 @@
 // Atomic Recovery — Database Seed Script
 // Creates singleton rows required on first run
 
-import { PrismaClient } from '../src/main/database/generated'
+import { PrismaClient } from '@prisma/client'
 import { join } from 'path'
 
 const prisma = new PrismaClient({

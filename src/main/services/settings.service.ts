@@ -33,14 +33,20 @@ export class SettingsService {
         'Call a friend'
       ])
 
-      // Create default settings on first run
-      return prisma.settings.create({
-        data: { 
-          id: SINGLETON_ID,
-          language: isVi ? 'vi' : 'en',
-          distractionList: isVi ? distractionListVi : distractionListEn
-        }
-      })
+      try {
+        // Create default settings on first run if missing
+        return await prisma.settings.upsert({
+          where: { id: SINGLETON_ID },
+          create: { 
+            id: SINGLETON_ID,
+            language: isVi ? 'vi' : 'en',
+            distractionList: isVi ? distractionListVi : distractionListEn
+          },
+          update: {} // do nothing if exists
+        })
+      } catch (error: any) {
+        throw error
+      }
     }
     return settings
   }

@@ -21,6 +21,7 @@ const HabitsPage = lazy(() => import('./pages/HabitsPage'))
 const IdentityPage = lazy(() => import('./pages/IdentityPage'))
 const JournalPage = lazy(() => import('./pages/JournalPage'))
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
+const TasksPage = lazy(() => import('./pages/TasksPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 
 // Loading fallback — minimal to avoid flash
@@ -110,6 +111,14 @@ export default function App() {
               element={
                 <Suspense fallback={<PageLoader />}>
                   <AnalyticsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/tasks"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <TasksPage />
                 </Suspense>
               }
             />

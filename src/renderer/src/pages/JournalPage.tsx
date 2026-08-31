@@ -1,154 +1,94 @@
-import { useState, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { vi, enUS } from 'date-fns/locale'
-import { Check, Loader2 } from 'lucide-react'
-import { MoodPicker } from '../features/journal/MoodPicker'
-import type { JournalEntry } from '../../../shared/types/journal.types'
-import type { SaveJournalDto } from '../../../shared/types/ipc.types'
+import { BookOpen } from 'lucide-react'
+import type { DailyLog } from '../../../shared/types/daily-log.types'
 
 export default function JournalPage() {
   const { t, i18n } = useTranslation()
-  const queryClient = useQueryClient()
   const dateLocale = i18n.language === 'vi' ? vi : enUS
-  const today = format(new Date(), 'yyyy-MM-dd')
-  
-  const [formData, setFormData] = useState<Partial<SaveJournalDto>>({
-    date: today,
-    morningIntention: '',
-    morningGratitude: '',
-    freeWrite: '',
-    eveningReflection: '',
-    eveningWins: ''
-  })
-  
-  const [isSaving, setIsSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
-  const { data: entry, isLoading } = useQuery({
-    queryKey: ['journal', today],
-    queryFn: () => window.api.journal.getByDate(today) as Promise<JournalEntry | null>
+  const { data: logs = [], isLoading } = useQuery<DailyLog[]>({
+    queryKey: ['dailyLog', 'all'],
+    queryFn: () => window.api.dailyLog.getAll()
   })
 
-  // Load existing data
-  useEffect(() => {
-    if (entry) {
-      setFormData({
-        date: today,
-        morningIntention: entry.morningIntention || '',
-        morningGratitude: (() => {
-          try { return JSON.parse(entry.gratitude).join('\n') } catch { return '' }
-        })(),
-        freeWrite: entry.freeWrite || '',
-        eveningReflection: entry.eveningReflection || '',
-        eveningWins: (() => {
-          try { return JSON.parse(entry.wins).join('\n') } catch { return '' }
-        })()
-      })
-    }
-  }, [entry, today])
-
-  const saveMutation = useMutation({
-    mutationFn: (data: SaveJournalDto) => window.api.journal.save(data),
-    onMutate: () => setIsSaving(true),
-    onSuccess: () => {
-      setLastSaved(new Date())
-      queryClient.invalidateQueries({ queryKey: ['journal', today] })
-    },
-    onSettled: () => setIsSaving(false)
-  })
-
-  // Debounced Save
-  useEffect(() => {
-    // Only auto-save if data is loaded and modified
-    if (isLoading) return
-
-    const handler = setTimeout(() => {
-      saveMutation.mutate(formData as SaveJournalDto)
-    }, 2000)
-
-    return () => clearTimeout(handler)
-  }, [formData]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleChange = (field: keyof SaveJournalDto, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  if (isLoading) return <div className="p-8 text-gray-500">{t('journal.loading', 'Loading journal...')}</div>
+  if (isLoading) return <div className="p-8 text-[var(--color-text-muted)]">{t('common.loading', 'Loading...')}</div>
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-24">
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)] mb-2">
-            {t('nav.journal', 'Journal')}
-          </h1>
-          <p className="text-[var(--color-text-tertiary)] capitalize">{format(new Date(), 'EEEE, MMMM do, yyyy', { locale: dateLocale })}</p>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-[var(--color-text-tertiary)]">
-          {isSaving ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> {t('journal.saving', 'Saving...')}</>
-          ) : lastSaved ? (
-            <><Check className="w-4 h-4 text-emerald-500" /> {t('journal.savedAt', 'Saved at')} {format(lastSaved, 'HH:mm')}</>
-          ) : null}
-        </div>
+    <div className="max-w-4xl mx-auto space-y-8 pb-24">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)] mb-2">
+          {t('journal.history', 'Lịch sử Check-in')}
+        </h1>
+        <p className="text-[var(--color-text-tertiary)]">
+          {t('journal.historyDesc', 'Xem lại các ghi chép và cảm xúc của bạn qua từng ngày.')}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-8">
-          {/* Morning Section */}
-          <section className="space-y-4">
-            <h2 className="text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">{t('journal.morningIntention', 'Morning Intention')}</h2>
-            <textarea
-              placeholder={t('journal.focusPlaceholder', 'What is your main focus for today?')}
-              value={formData.morningIntention || ''}
-              onChange={e => handleChange('morningIntention', e.target.value)}
-              className="w-full bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl p-4 text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)] resize-none h-24"
-            />
-            <textarea
-              placeholder={t('journal.gratitudePlaceholder', 'I am grateful for... (one per line)')}
-              value={formData.morningGratitude || ''}
-              onChange={e => handleChange('morningGratitude', e.target.value)}
-              className="w-full bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl p-4 text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)] resize-none h-32"
-            />
-          </section>
-
-          {/* Free Write */}
-          <section className="space-y-4">
-            <h2 className="text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">{t('journal.freeWrite', 'Brain Dump / Free Write')}</h2>
-            <textarea
-              placeholder={t('journal.freeWritePlaceholder', 'Clear your mind. Write anything...')}
-              value={formData.freeWrite || ''}
-              onChange={e => handleChange('freeWrite', e.target.value)}
-              className="w-full bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl p-4 text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)] resize-none h-64"
-            />
-          </section>
-
-          {/* Evening Section */}
-          <section className="space-y-4 pt-8 border-t border-[var(--color-surface-border)]">
-            <h2 className="text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">{t('journal.eveningReflection', 'Evening Reflection')}</h2>
-            <textarea
-              placeholder={t('journal.winsPlaceholder', '3 Wins for today... (one per line)')}
-              value={formData.eveningWins || ''}
-              onChange={e => handleChange('eveningWins', e.target.value)}
-              className="w-full bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl p-4 text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)] resize-none h-32"
-            />
-            <textarea
-              placeholder={t('journal.reflectionPlaceholder', 'How did today go? What could be better?')}
-              value={formData.eveningReflection || ''}
-              onChange={e => handleChange('eveningReflection', e.target.value)}
-              className="w-full bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl p-4 text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)] resize-none h-32"
-            />
-          </section>
+      {logs.length === 0 ? (
+        <div className="text-center py-20 bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl">
+          <BookOpen className="w-12 h-12 text-[var(--color-surface-border)] mx-auto mb-4" />
+          <p className="text-[var(--color-text-muted)]">{t('journal.empty', 'Chưa có ghi chép nào.')}</p>
         </div>
+      ) : (
+        <div className="space-y-6">
+          {logs.map(log => {
+            const tags = log.emotionTags || []
+            const gratitude = log.gratitude || []
 
-        {/* Sidebar: Mood */}
-        <div className="space-y-8">
-          <MoodPicker date={today} period="MORNING" />
-          <MoodPicker date={today} period="EVENING" />
+            return (
+              <div key={log.id} className="bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-[var(--color-surface-border)] pb-4">
+                  <h3 className="font-semibold text-lg text-[var(--color-text-primary)] capitalize">
+                    {format(new Date(log.date), 'EEEE, MMMM do, yyyy', { locale: dateLocale })}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-[var(--color-text-secondary)]">
+                    {log.mood !== null && <span>{t('dashboard.mood', 'Tâm trạng')}: {['','😞','😕','😐','😊','😄'][log.mood]}</span>}
+                    {log.energy !== null && <span>{t('dashboard.energy', 'Năng lượng')}: {log.energy}/5</span>}
+                  </div>
+                </div>
+
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map(tag => (
+                      <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-surface-overlay)] text-[var(--color-text-secondary)]">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {log.morningIntention && (
+                    <div>
+                      <h4 className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-2">{t('journal.morningIntention', 'Morning Intention')}</h4>
+                      <p className="text-[var(--color-text-primary)] text-sm whitespace-pre-wrap leading-relaxed">{log.morningIntention}</p>
+                    </div>
+                  )}
+                  
+                  {gratitude.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-2">{t('journal.gratitude', 'Gratitude')}</h4>
+                      <ul className="list-disc list-inside text-[var(--color-text-primary)] text-sm space-y-1">
+                        {gratitude.map((g, i) => <li key={i}>{g}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {log.reflection && (
+                    <div className="md:col-span-2 mt-2 pt-4 border-t border-[var(--color-surface-border)] border-dashed">
+                      <h4 className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-2">{t('journal.reflection', 'Reflection')}</h4>
+                      <p className="text-[var(--color-text-primary)] text-sm whitespace-pre-wrap leading-relaxed">{log.reflection}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </div>
+      )}
     </div>
   )
 }

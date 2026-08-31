@@ -7,11 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard,
-  HeartHandshake,
+  Shield,
   CheckSquare,
+  ListTodo,
   User,
   BookOpen,
-  BarChart2,
+  Activity,
   Settings,
   Zap,
   ChevronLeft
@@ -26,12 +27,13 @@ export function Sidebar() {
 
   const NAV_ITEMS = [
     { path: '/', label: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard, shortcut: '1' },
-    { path: '/recovery', label: t('nav.recovery', 'Recovery'), icon: HeartHandshake, shortcut: '2' },
+    { path: '/recovery', label: t('nav.recovery', 'Recovery'), icon: Shield, shortcut: '2' },
     { path: '/habits', label: t('nav.habits', 'Habits'), icon: CheckSquare, shortcut: '3' },
-    { path: '/identity', label: t('nav.identity', 'Identity'), icon: User, shortcut: '4' },
-    { path: '/journal', label: t('nav.journal', 'Journal'), icon: BookOpen, shortcut: '5' },
-    { path: '/analytics', label: t('nav.analytics', 'Analytics'), icon: BarChart2, shortcut: '6' },
-    { path: '/settings', label: t('nav.settings', 'Settings'), icon: Settings, shortcut: '7' }
+    { path: '/tasks', label: t('nav.tasks', 'Tasks'), icon: ListTodo, shortcut: '4' },
+    { path: '/identity', label: t('nav.identity', 'Identity'), icon: User, shortcut: '5' },
+    { path: '/journal', label: t('nav.journal', 'Daily Log'), icon: BookOpen, shortcut: '6' },
+    { path: '/analytics', label: t('nav.analytics', 'Analytics'), icon: Activity, shortcut: '7' },
+    { path: '/settings', label: t('nav.settings', 'Settings'), icon: Settings, shortcut: '8' }
   ]
 
   const handleLanguageChange = (value: string) => {

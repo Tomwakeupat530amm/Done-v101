@@ -3,20 +3,17 @@
 
 import type { StreakDisplay, RelapseEvent, UrgeLog, UrgeStats, Milestone } from './recovery.types'
 import type { HabitWithStreak, HabitLog, TodayHabitStatus, HabitStreak } from './habit.types'
-import type { JournalEntry } from './journal.types'
-import type { MoodLog } from './mood.types'
+import type { DailyLog } from './daily-log.types'
 import type { IdentityProfile, FutureSelf, IdentityStatement } from './identity.types'
 
 // Import DTOs for local use
 import type { LogUrgeDto } from '../dtos/emergency.dto'
-import type { SaveJournalEntryDto as SaveJournalDto } from '../dtos/journal.dto'
-import type { LogMoodDto } from '../dtos/mood.dto'
+import type { CreateDailyLogDto, UpdateDailyLogDto } from '../dtos/daily-log.dto'
 import type { UpdateProfileDto, UpdateFutureSelfDto, CreateStatementDto as AddStatementDto } from '../dtos/identity.dto'
 
 // Re-export DTOs so consumers can import from here
 export type { LogUrgeDto } from '../dtos/emergency.dto'
-export type { SaveJournalEntryDto as SaveJournalDto } from '../dtos/journal.dto'
-export type { LogMoodDto } from '../dtos/mood.dto'
+export type { CreateDailyLogDto, UpdateDailyLogDto } from '../dtos/daily-log.dto'
 export type { UpdateProfileDto, UpdateFutureSelfDto, CreateStatementDto as AddStatementDto } from '../dtos/identity.dto'
 
 // ─── DTOs inline for IPC ─────────────────────────────────────────
@@ -83,13 +80,11 @@ export interface IpcChannels {
   'habit:checkIn': { input: { id: string; date: string }; output: HabitStreak }
   'habit:getLogs': { input: { id: string; year: number }; output: HabitLog[] }
 
-  // Journal
-  'journal:save': { input: SaveJournalDto; output: JournalEntry }
-  'journal:getByDate': { input: { date: string }; output: JournalEntry | null }
-
-  // Mood
-  'mood:log': { input: LogMoodDto; output: MoodLog }
-  'mood:getByDate': { input: { date: string }; output: MoodLog[] }
+  // Daily Log
+  'dailyLog:getByDate': { input: { date: string }; output: DailyLog | null }
+  'dailyLog:getAll': { input: void; output: DailyLog[] }
+  'dailyLog:create': { input: CreateDailyLogDto; output: DailyLog }
+  'dailyLog:update': { input: { id: string; data: UpdateDailyLogDto }; output: DailyLog }
 
   // Identity
   'identity:getProfile': { input: void; output: IdentityProfile | null }
@@ -139,13 +134,11 @@ export interface WindowApi {
     checkIn: (id: string, date: string) => Promise<HabitStreak>
     getLogs: (id: string, year: number) => Promise<HabitLog[]>
   }
-  journal: {
-    save: (dto: SaveJournalDto) => Promise<JournalEntry>
-    getByDate: (date: string) => Promise<JournalEntry | null>
-  }
-  mood: {
-    log: (dto: LogMoodDto) => Promise<MoodLog>
-    getByDate: (date: string) => Promise<MoodLog[]>
+  dailyLog: {
+    getByDate: (date: string) => Promise<DailyLog | null>
+    getAll: () => Promise<DailyLog[]>
+    create: (dto: CreateDailyLogDto) => Promise<DailyLog>
+    update: (id: string, dto: UpdateDailyLogDto) => Promise<DailyLog>
   }
   identity: {
     getProfile: () => Promise<IdentityProfile | null>
@@ -166,6 +159,14 @@ export interface WindowApi {
     getHabitWeekStats: () => Promise<HabitWeekStats>
     getRecoverySummary: () => Promise<RecoverySummary>
     getJournalStreak: () => Promise<JournalStreakData>
+  }
+  task: {
+    getAll: () => Promise<import('./task.types').Task[]>
+    getDashboardTasks: () => Promise<import('./task.types').Task[]>
+    create: (dto: import('./task.types').CreateTaskDto) => Promise<import('./task.types').Task>
+    update: (id: string, dto: import('./task.types').UpdateTaskDto) => Promise<import('./task.types').Task>
+    delete: (id: string) => Promise<void>
+    updateOrder: (id: string, newStatus: import('./task.types').TaskStatus, newOrder: number) => Promise<import('./task.types').Task>
   }
   pin: {
     isEnabled: () => Promise<boolean>

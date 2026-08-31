@@ -36,16 +36,12 @@ const api = {
     getLogs: (id: string, year: number) => invoke('habit:getLogs', { id, year })
   },
 
-  // ─── Journal ─────────────────────────────────────────────────
-  journal: {
-    save: (dto: unknown) => invoke('journal:save', dto),
-    getByDate: (date: string) => invoke('journal:getByDate', { date })
-  },
-
-  // ─── Mood ────────────────────────────────────────────────────
-  mood: {
-    log: (dto: unknown) => invoke('mood:log', dto),
-    getByDate: (date: string) => invoke('mood:getByDate', { date })
+  // ─── Daily Log ─────────────────────────────────────────────────
+  dailyLog: {
+    getByDate: (date: string) => invoke('dailyLog:getByDate', { date }),
+    getAll: () => invoke('dailyLog:getAll'),
+    create: (dto: unknown) => invoke('dailyLog:create', dto),
+    update: (id: string, dto: unknown) => invoke('dailyLog:update', { id, data: dto })
   },
 
   // ─── Identity ────────────────────────────────────────────────
@@ -68,18 +64,24 @@ const api = {
 
   // ─── Analytics ────────────────────────────────────────────
   analytics: {
-    getMoodTrend: (days?: number) => invoke('analytics:getMoodTrend', days),
-    getHabitWeekStats: () => invoke('analytics:getHabitWeekStats'),
-    getRecoverySummary: () => invoke('analytics:getRecoverySummary'),
-    getJournalStreak: () => invoke('analytics:getJournalStreak')
+    getMoodTrend: (days?: number) => ipcRenderer.invoke('analytics:getMoodTrend', days),
+    getHabitWeekStats: () => ipcRenderer.invoke('analytics:getHabitWeekStats'),
+    getRecoverySummary: () => ipcRenderer.invoke('analytics:getRecoverySummary'),
+    getJournalStreak: () => ipcRenderer.invoke('analytics:getJournalStreak')
   },
-
-  // ─── PIN ────────────────────────────────────────────────
+  task: {
+    getAll: () => ipcRenderer.invoke('task:getAll'),
+    getDashboardTasks: () => ipcRenderer.invoke('task:getDashboardTasks'),
+    create: (dto: import('../shared/types/task.types').CreateTaskDto) => ipcRenderer.invoke('task:create', dto),
+    update: (id: string, dto: import('../shared/types/task.types').UpdateTaskDto) => ipcRenderer.invoke('task:update', { id, dto }),
+    delete: (id: string) => ipcRenderer.invoke('task:delete', id),
+    updateOrder: (id: string, newStatus: string, newOrder: number) => ipcRenderer.invoke('task:updateOrder', { id, newStatus, newOrder })
+  },
   pin: {
-    isEnabled: () => invoke<boolean>('pin:isEnabled'),
-    verify: (pin: string) => invoke<boolean>('pin:verify', pin),
-    set: (pin: string) => invoke<{ success: boolean }>('pin:set', pin),
-    disable: () => invoke<{ success: boolean }>('pin:disable')
+    isEnabled: () => ipcRenderer.invoke('pin:isEnabled'),
+    verify: (pin: string) => ipcRenderer.invoke('pin:verify', pin),
+    set: (pin: string) => ipcRenderer.invoke('pin:set', pin),
+    disable: () => ipcRenderer.invoke('pin:disable')
   },
 
   // ─── Events ──────────────────────────────────────────────────

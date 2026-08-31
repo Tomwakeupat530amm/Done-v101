@@ -1,7 +1,7 @@
 // src/main/index.ts
 // Atomic Recovery — Main Process Entry
 
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { registerAllIpcHandlers } from './ipc'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -51,54 +51,45 @@ function createWindow(): void {
 
 // ─── IPC Handlers ──────────────────────────────────────────────
 
-function registerIpcHandlers(): void {
-
-  // Ping test
-  ipcMain.handle('ping', () => 'pong')
-
-  // Window controls (for custom TitleBar)
-  ipcMain.handle('window:minimize', (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    win?.minimize()
-  })
-  ipcMain.handle('window:maximize', (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    if (win?.isMaximized()) {
-      win.unmaximize()
-    } else {
-      win?.maximize()
-    }
-  })
-  ipcMain.handle('window:close', (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    win?.close()
-  })
-  ipcMain.handle('window:isMaximized', (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    return win?.isMaximized() ?? false
-  })
-
-
-  console.log('[IPC] Core handlers registered')
-}
+// ping handler has been moved to registerAllIpcHandlers
 
 // ─── App Lifecycle ─────────────────────────────────────────────
 
 app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.atomic-recovery')
 
-  // Initialize database
+  // Initialize database — validate schema before opening the window
   try {
     const prisma = getPrismaClient()
-    // Quick connectivity check
-    await prisma.$queryRaw`SELECT 1`
+    // Validate the schema is intact by checking a core table
+    await prisma.$queryRaw`SELECT name FROM sqlite_master WHERE type='table' AND name='habits'`
+      .then(async (rows: unknown) => {
+        const tableList = rows as Array<{name: string}>
+        if (tableList.length === 0) {
+          // Table missing → db is corrupt or empty; restore from template
+          console.error('[DB] Schema missing! Restoring database from template...')
+          await prisma.$disconnect()
+          const { join } = await import('path')
+          const { app: electronApp } = await import('electron')
+          const fs = await import('fs')
+          const userDataPath = electronApp.getPath('userData')
+          const dbPath = join(userDataPath, 'atomic-recovery.db')
+          const templatePath = join(process.resourcesPath, 'prod.db')
+          // Force overwrite regardless of size
+          if (fs.existsSync(templatePath)) {
+            fs.copyFileSync(templatePath, dbPath)
+            console.log('[DB] Database restored from template')
+          }
+        } else {
+          console.log('[DB] Schema validated, habits table found')
+        }
+      })
     console.log('[DB] Database connected successfully')
   } catch (error) {
     console.error('[DB] Database connection failed:', error)
   }
 
   // Register all IPC handlers before creating window
-  registerIpcHandlers()
   registerAllIpcHandlers()
 
   app.on('browser-window-created', (_, window) => {

@@ -8,13 +8,13 @@ import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import {
   Sun, Moon, Sunset, BookOpen, Smile, ArrowRight,
-  CheckCircle2, Circle, ShieldCheck
+  CheckCircle2, ShieldCheck, ListTodo
 } from 'lucide-react'
 import { SobrietyCounter } from '../features/recovery/SobrietyCounter'
 import type { TodayHabitStatus } from '../../../shared/types/habit.types'
-import type { JournalEntry } from '../../../shared/types/journal.types'
-import type { MoodLog } from '../../../shared/types/mood.types'
+import type { DailyLog } from '../../../shared/types/daily-log.types'
 import type { IdentityProfile } from '../../../shared/types/identity.types'
+import type { Task } from '../../../shared/types/task.types'
 
 function getGreeting(t: any): { text: string; icon: React.ReactNode } {
   const hour = new Date().getHours()
@@ -43,14 +43,9 @@ export default function DashboardPage() {
     queryFn: () => window.api.habits.getTodayStatus()
   })
 
-  const { data: journal } = useQuery<JournalEntry | null>({
-    queryKey: ['journal', today],
-    queryFn: () => window.api.journal.getByDate(today)
-  })
-
-  const { data: moods = [] } = useQuery<MoodLog[]>({
-    queryKey: ['moods', today],
-    queryFn: () => window.api.mood.getByDate(today)
+  const { data: dailyLog } = useQuery<DailyLog | null>({
+    queryKey: ['dailyLog', today],
+    queryFn: () => window.api.dailyLog.getByDate(today)
   })
 
   const { data: profile } = useQuery<IdentityProfile | null>({
@@ -58,10 +53,15 @@ export default function DashboardPage() {
     queryFn: () => window.api.identity.getProfile()
   })
 
+  const { data: dashboardTasks = [] } = useQuery<Task[]>({
+    queryKey: ['tasks', 'dashboard'],
+    queryFn: () => window.api.task.getDashboardTasks()
+  })
+
   const completedHabits = habits.filter(h => h.isCompletedToday).length
   const totalHabits = habits.length
-  const morningMood = moods.find(m => m.period === 'MORNING')
-  const hasJournal = !!journal?.morningIntention
+  const hasJournal = !!dailyLog?.morningIntention
+  const morningMood = dailyLog?.mood ? { mood: dailyLog.mood, energy: dailyLog.energy } : null
 
   return (
     <motion.div
@@ -146,12 +146,8 @@ export default function DashboardPage() {
           {hasJournal ? (
             <>
               <p className="text-[var(--color-text-primary)] text-sm leading-relaxed line-clamp-3">
-                {journal?.morningIntention}
+                {dailyLog?.morningIntention}
               </p>
-              <div className="flex items-center gap-1.5 mt-3">
-                <Circle className="w-2 h-2 fill-violet-500 text-violet-500" />
-                <span className="text-xs text-[var(--color-text-muted)]">{journal?.wordCount ?? 0} {t('dashboard.words', 'từ')}</span>
-              </div>
             </>
           ) : (
             <p className="text-[var(--color-text-muted)] text-sm">{t('dashboard.notWrittenIntention', 'Chưa viết intention sáng nay')}</p>
@@ -210,6 +206,37 @@ export default function DashboardPage() {
                 </span>
                 {(habit.streak?.currentStreak ?? 0) > 0 && (
                   <span className="ml-auto text-xs text-amber-400">🔥 {habit.streak!.currentStreak}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Focus Today (Tasks) */}
+      {dashboardTasks.length > 0 && (
+        <motion.div {...fadeIn(5.5)} className={card}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ListTodo className="w-4 h-4 text-rose-400" />
+              <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest">Focus Today</h2>
+            </div>
+            <button
+              onClick={() => navigate('/tasks')}
+              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+            >
+              {t('dashboard.viewAll', 'Xem tất cả')} <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {dashboardTasks.map(task => (
+              <div key={task.id} className="flex flex-col py-1.5 border-b border-surface-border last:border-0 cursor-pointer hover:bg-surface-overlay px-2 -mx-2 rounded transition-colors" onClick={() => navigate('/tasks')}>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${task.status === 'IN_PROGRESS' ? 'bg-indigo-500' : 'bg-rose-500'}`} />
+                  <span className="text-sm text-text-primary font-medium">{task.title}</span>
+                </div>
+                {task.description && (
+                  <span className="text-xs text-text-muted mt-1 ml-4 line-clamp-1">{task.description}</span>
                 )}
               </div>
             ))}

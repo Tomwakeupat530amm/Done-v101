@@ -153,7 +153,6 @@ model Habit {
 
   logs            HabitLog[]
   streak          HabitStreak?
-  focusSessions   FocusSession[]
   milestones      Milestone[]
 
   @@index([isArchived, frequency])
@@ -195,48 +194,28 @@ model HabitStreak {
 }
 
 // ─────────────────────────────────────────────────────────────
-// JOURNAL
+// DAILY CHECK-IN (Journal & Mood)
 // ─────────────────────────────────────────────────────────────
 
-model JournalEntry {
-  id                 String   @id @default(cuid())
-  date               String   @unique                      // "YYYY-MM-DD"
-  morningIntention   String?
-  eveningReflection  String?
-  freeWrite          String?
-  wins               String   @default("[]")               // JSON: string[]
-  gratitude          String   @default("[]")               // JSON: string[]
-  tomorrowFocus      String?
-  isDraft            Boolean  @default(false)
-  wordCount          Int      @default(0)                  // Cached word count
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+model DailyLog {
+  id               String   @id @default(cuid())
+  date             String   @unique                      // "YYYY-MM-DD"
+  
+  // Mood / Status
+  mood             Int?                                  // 1-5: 1=Terrible 5=Excellent
+  energy           Int?                                  // 1-5
+  emotionTags      String   @default("[]")               // JSON: string[]
+  
+  // Journal
+  morningIntention String?                               // Optional
+  gratitude        String   @default("[]")               // JSON: string[]
+  reflection       String?                               // Free write
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([date])
-  @@index([isDraft])
-  @@map("journal_entries")
-}
-
-// ─────────────────────────────────────────────────────────────
-// MOOD TRACKING
-// ─────────────────────────────────────────────────────────────
-
-model MoodLog {
-  id           String   @id @default(cuid())
-  date         String                                      // "YYYY-MM-DD"
-  period       String                                      // MoodPeriod
-  mood         Int                                         // 1-5: 1=Terrible 5=Excellent
-  energy       Int                                         // 1-5
-  anxiety      Int      @default(3)                        // 1-5 (1=calm, 5=high anxiety)
-  focus        Int      @default(3)                        // 1-5
-  emotionTags  String   @default("[]")                     // JSON: string[]
-  note         String?
-  loggedAt     DateTime @default(now())
-
-  @@unique([date, period])
-  @@index([date])
-  @@index([mood])
-  @@map("mood_logs")
+  @@map("daily_logs")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -289,11 +268,7 @@ model LifeScore {
   recoveryScore Float    @default(0)                       // 0-100
   habitsScore   Float    @default(0)
   moodScore     Float    @default(0)
-  sleepScore    Float    @default(0)
-  focusScore    Float    @default(0)
-  journalScore  Float    @default(0)
   overallScore  Float    @default(0)
-  breakdown     String   @default("{}")                    // JSON: detailed calculation
   calculatedAt  DateTime @default(now())
 
   @@index([date])
@@ -301,52 +276,7 @@ model LifeScore {
   @@map("life_scores")
 }
 
-// ─────────────────────────────────────────────────────────────
-// FOCUS SESSIONS
-// ─────────────────────────────────────────────────────────────
 
-model FocusSession {
-  id              String   @id @default(cuid())
-  title           String?
-  type            String   @default("POMODORO")            // FocusType
-  plannedMinutes  Int      @default(25)
-  actualMinutes   Int?
-  breakMinutes    Int?
-  pomodoroCount   Int      @default(0)
-  notes           String?
-  completed       Boolean  @default(false)
-  habitId         String?
-  habit           Habit?   @relation(fields: [habitId], references: [id])
-  startedAt       DateTime @default(now())
-  endedAt         DateTime?
-
-  @@index([startedAt])
-  @@index([completed])
-  @@index([habitId])
-  @@map("focus_sessions")
-}
-
-// ─────────────────────────────────────────────────────────────
-// SLEEP TRACKING
-// ─────────────────────────────────────────────────────────────
-
-model SleepLog {
-  id               String   @id @default(cuid())
-  date             String   @unique                        // "YYYY-MM-DD" (date of sleep night)
-  bedtime          DateTime
-  wakeTime         DateTime
-  totalHours       Float                                   // Calculated
-  quality          Int                                     // 1-5
-  notes            String?
-  hadNightmares    Boolean  @default(false)
-  hadRelapseDream  Boolean  @default(false)               // Track for pattern awareness
-  screenTimeBeforeBed Int?                                 // minutes
-  loggedAt         DateTime @default(now())
-
-  @@index([date])
-  @@index([quality])
-  @@map("sleep_logs")
-}
 
 // ─────────────────────────────────────────────────────────────
 // ACHIEVEMENTS
@@ -426,11 +356,30 @@ model Settings {
   emergencyButtonVisible     Boolean  @default(true)
   distractionList            String   @default("[]")       // JSON: string[] (default distractions)
   affirmationSchedule        String   @default("{}")       // JSON: {times: string[]}
-  lifeScoreWeights           String   @default("{}")       // JSON: weight overrides
   onboardingCompleted        Boolean  @default(false)
   onboardingStep             Int      @default(0)
   appVersion                 String   @default("0.1.0")
   updatedAt                  DateTime @updatedAt
 
   @@map("settings")
+}
+
+// ─────────────────────────────────────────────────────────────
+// TASKS (Kanban)
+// ─────────────────────────────────────────────────────────────
+
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?      
+  status      String       @default("TODO")       // TaskStatus
+  priority    String       @default("MEDIUM")     // TaskPriority
+  order       Float        
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  completedAt DateTime?    
+
+  @@index([status])
+  @@index([order])
+  @@map("tasks")
 }

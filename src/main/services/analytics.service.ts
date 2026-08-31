@@ -12,18 +12,19 @@ export class AnalyticsService {
       format(subDays(today, days - 1 - i), 'yyyy-MM-dd')
     )
 
-    const logs = await prisma.moodLog.findMany({
+    const logs = await prisma.dailyLog.findMany({
       where: { date: { in: dates } },
       orderBy: { date: 'asc' }
     })
 
     return dates.map(date => {
-      const dayLogs = logs.filter(l => l.date === date)
+      const dayLogs = logs.filter(l => l.date === date && l.mood !== null)
       const avgMood = dayLogs.length
-        ? Math.round((dayLogs.reduce((s, l) => s + l.mood, 0) / dayLogs.length) * 10) / 10
+        ? Math.round((dayLogs.reduce((s, l) => s + (l.mood as number), 0) / dayLogs.length) * 10) / 10
         : null
-      const avgEnergy = dayLogs.length
-        ? Math.round((dayLogs.reduce((s, l) => s + l.energy, 0) / dayLogs.length) * 10) / 10
+      const energyLogs = logs.filter(l => l.date === date && l.energy !== null)
+      const avgEnergy = energyLogs.length
+        ? Math.round((energyLogs.reduce((s, l) => s + (l.energy as number), 0) / energyLogs.length) * 10) / 10
         : null
       return { date, avgMood, avgEnergy, count: dayLogs.length }
     })
@@ -100,7 +101,7 @@ export class AnalyticsService {
 
   // ─── Journal streak ────────────────────────────────────────────
   async getJournalStreak() {
-    const entries = await prisma.journalEntry.findMany({
+    const entries = await prisma.dailyLog.findMany({
       orderBy: { date: 'desc' },
       take: 30,
       select: { date: true }
@@ -115,7 +116,7 @@ export class AnalyticsService {
       checking = format(subDays(new Date(checking), 1), 'yyyy-MM-dd')
     }
 
-    return { streak, totalEntries: await prisma.journalEntry.count() }
+    return { streak, totalEntries: await prisma.dailyLog.count() }
   }
 
   private getNextMilestone(earnedDays: number[]): number | null {

@@ -19,6 +19,8 @@ files:
   - '!docs'
 
 extraResources:
+  - from: 'prisma/prod.db'
+    to: 'prod.db'
   - from: node_modules/.prisma/
     to: node_modules/.prisma/
     filter:
@@ -37,7 +39,7 @@ asarUnpack:
 
 win:
   executableName: atomic-recovery
-  icon: build/icon.ico
+  icon: build/icon.png
 nsis:
   artifactName: ${productName}-Setup-${version}.${ext}
   shortcutName: ${productName}
@@ -51,7 +53,7 @@ mac:
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
   notarize: false
-  icon: build/icon.icns
+  icon: build/icon.png
 dmg:
   artifactName: ${productName}-${version}.${ext}
 
