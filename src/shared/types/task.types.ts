@@ -8,6 +8,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   order: number;
+  pomodoroSessions: number;
   createdAt: Date;
   updatedAt: Date;
   completedAt: Date | null;
@@ -19,6 +20,7 @@ export interface CreateTaskDto {
   status?: TaskStatus;
   priority?: TaskPriority;
   order?: number;
+  pomodoroSessions?: number;
 }
 
 export interface UpdateTaskDto {
@@ -27,4 +29,6 @@ export interface UpdateTaskDto {
   status?: TaskStatus;
   priority?: TaskPriority;
   order?: number;
+  pomodoroSessions?: number;
 }
+

@@ -22,7 +22,13 @@ const IdentityPage = lazy(() => import('./pages/IdentityPage'))
 const JournalPage = lazy(() => import('./pages/JournalPage'))
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
 const TasksPage = lazy(() => import('./pages/TasksPage'))
+const GoalsPage = lazy(() => import('./pages/GoalsPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+
+import { PomodoroBar } from './features/tasks/PomodoroBar'
+import { DueGoalModal } from './features/goals/DueGoalModal'
+import { useState } from 'react'
+import type { Goal } from '../../shared/types/goal.types'
 
 // Loading fallback — minimal to avoid flash
 function PageLoader() {
@@ -40,10 +46,11 @@ function PageLoader() {
 
 export default function App() {
   const { isLocked, lock } = useLockStore()
-
   const { i18n } = useTranslation()
 
-  // Check PIN and settings on startup
+  const [activeDueGoal, setActiveDueGoal] = useState<Goal | null>(null)
+
+  // Check PIN, settings and due goals on startup
   useEffect(() => {
     window.api.pin.isEnabled().then(enabled => {
       if (enabled) lock()
@@ -54,7 +61,27 @@ export default function App() {
         i18n.changeLanguage(settings.language)
       }
     }).catch(() => {})
+
+    // Check for goals that reached their target date
+    window.api.goal.getDueGoals().then(dueGoals => {
+      if (dueGoals && dueGoals.length > 0) {
+        // Show the first due goal that hasn't been completed
+        setActiveDueGoal(dueGoals[0])
+      }
+    }).catch(err => {
+      console.error('Failed to check due goals:', err)
+    })
   }, [])
+
+  const handleCompleteDueGoal = async (id: string) => {
+    await window.api.goal.markCompleted(id)
+    setActiveDueGoal(null)
+  }
+
+  const handleExtendDueGoal = async (id: string, newTargetDate: string) => {
+    await window.api.goal.extendTargetDate(id, newTargetDate)
+    setActiveDueGoal(null)
+  }
 
   return (
     <QueryProvider>
@@ -91,6 +118,22 @@ export default function App() {
               }
             />
             <Route
+              path="/tasks"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <TasksPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/goals"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <GoalsPage />
+                </Suspense>
+              }
+            />
+            <Route
               path="/identity"
               element={
                 <Suspense fallback={<PageLoader />}>
@@ -115,14 +158,6 @@ export default function App() {
               }
             />
             <Route
-              path="/tasks"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <TasksPage />
-                </Suspense>
-              }
-            />
-            <Route
               path="/settings"
               element={
                 <Suspense fallback={<PageLoader />}>
@@ -134,6 +169,18 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
+
+        {/* Global Pomodoro Controller Bar */}
+        <PomodoroBar />
+
+        {/* Global Due Goal Notification Popup */}
+        <DueGoalModal
+          goal={activeDueGoal}
+          isOpen={!!activeDueGoal}
+          onClose={() => setActiveDueGoal(null)}
+          onComplete={handleCompleteDueGoal}
+          onExtend={handleExtendDueGoal}
+        />
 
         {/* Global toast notifications */}
         <Toaster
@@ -153,3 +200,4 @@ export default function App() {
     </QueryProvider>
   )
 }
+

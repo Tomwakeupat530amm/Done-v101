@@ -11,6 +11,7 @@ import { registerSettingsHandlers } from './settings.handler'
 import { registerAnalyticsHandlers } from './analytics.handler'
 import { registerPinHandlers } from './pin.handler'
 import { registerTaskHandlers } from './task.handler'
+import { registerGoalHandlers } from './goal.handler'
 
 import { BrowserWindow } from 'electron'
 
@@ -51,7 +52,9 @@ export function registerAllIpcHandlers(): void {
   registerAnalyticsHandlers()
   registerPinHandlers()
   registerTaskHandlers()
+  registerGoalHandlers()
   
   console.log('[IPC] All handlers registered')
 }
+
 

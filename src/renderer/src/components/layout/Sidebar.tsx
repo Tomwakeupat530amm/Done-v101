@@ -15,7 +15,8 @@ import {
   Activity,
   Settings,
   Zap,
-  ChevronLeft
+  ChevronLeft,
+  Target
 } from 'lucide-react'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { useAppStore } from '../../stores/appStore'
@@ -30,10 +31,11 @@ export function Sidebar() {
     { path: '/recovery', label: t('nav.recovery', 'Recovery'), icon: Shield, shortcut: '2' },
     { path: '/habits', label: t('nav.habits', 'Habits'), icon: CheckSquare, shortcut: '3' },
     { path: '/tasks', label: t('nav.tasks', 'Tasks'), icon: ListTodo, shortcut: '4' },
-    { path: '/identity', label: t('nav.identity', 'Identity'), icon: User, shortcut: '5' },
-    { path: '/journal', label: t('nav.journal', 'Daily Log'), icon: BookOpen, shortcut: '6' },
-    { path: '/analytics', label: t('nav.analytics', 'Analytics'), icon: Activity, shortcut: '7' },
-    { path: '/settings', label: t('nav.settings', 'Settings'), icon: Settings, shortcut: '8' }
+    { path: '/goals', label: t('nav.goals', 'Mục tiêu'), icon: Target, shortcut: '5' },
+    { path: '/identity', label: t('nav.identity', 'Identity'), icon: User, shortcut: '6' },
+    { path: '/journal', label: t('nav.journal', 'Daily Log'), icon: BookOpen, shortcut: '7' },
+    { path: '/analytics', label: t('nav.analytics', 'Analytics'), icon: Activity, shortcut: '8' },
+    { path: '/settings', label: t('nav.settings', 'Settings'), icon: Settings, shortcut: '9' }
   ]
 
   const handleLanguageChange = (value: string) => {

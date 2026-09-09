@@ -26,4 +26,9 @@ export function registerTaskHandlers() {
   ipcMain.handle('task:updateOrder', async (_, payload: { id: string, newStatus: TaskStatus, newOrder: number }) => {
     return taskService.updateOrder(payload.id, payload.newStatus, payload.newOrder)
   })
+
+  ipcMain.handle('task:incrementPomodoro', async (_, id: string) => {
+    return taskService.incrementPomodoro(id)
+  })
 }
+

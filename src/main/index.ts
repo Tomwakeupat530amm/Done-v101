@@ -62,28 +62,58 @@ app.whenReady().then(async () => {
   try {
     const prisma = getPrismaClient()
     // Validate the schema is intact by checking a core table
-    await prisma.$queryRaw`SELECT name FROM sqlite_master WHERE type='table' AND name='habits'`
-      .then(async (rows: unknown) => {
-        const tableList = rows as Array<{name: string}>
-        if (tableList.length === 0) {
-          // Table missing → db is corrupt or empty; restore from template
-          console.error('[DB] Schema missing! Restoring database from template...')
-          await prisma.$disconnect()
-          const { join } = await import('path')
-          const { app: electronApp } = await import('electron')
-          const fs = await import('fs')
-          const userDataPath = electronApp.getPath('userData')
-          const dbPath = join(userDataPath, 'atomic-recovery.db')
-          const templatePath = join(process.resourcesPath, 'prod.db')
-          // Force overwrite regardless of size
-          if (fs.existsSync(templatePath)) {
-            fs.copyFileSync(templatePath, dbPath)
-            console.log('[DB] Database restored from template')
-          }
-        } else {
-          console.log('[DB] Schema validated, habits table found')
-        }
-      })
+    const rows = await prisma.$queryRaw`SELECT name FROM sqlite_master WHERE type='table' AND name='habits'`
+    const tableList = rows as Array<{name: string}>
+    
+    if (tableList.length === 0) {
+      // Table missing → db is corrupt or empty; restore from template
+      console.error('[DB] Schema missing! Restoring database from template...')
+      await prisma.$disconnect()
+      const { join } = await import('path')
+      const { app: electronApp } = await import('electron')
+      const fs = await import('fs')
+      const userDataPath = electronApp.getPath('userData')
+      const dbPath = join(userDataPath, 'atomic-recovery.db')
+      const templatePath = join(process.resourcesPath, 'prod.db')
+      // Force overwrite regardless of size
+      if (fs.existsSync(templatePath)) {
+        fs.copyFileSync(templatePath, dbPath)
+        console.log('[DB] Database restored from template')
+      }
+    } else {
+      console.log('[DB] Schema validated, habits table found')
+      
+      // --- AUTO MIGRATIONS FOR EXISTING DB ---
+      // 1. Check if "goals" table exists
+      const goalsCheck = await prisma.$queryRaw`SELECT name FROM sqlite_master WHERE type='table' AND name='goals'`
+      if ((goalsCheck as any[]).length === 0) {
+        console.log('[DB] Applying migration: Creating goals table...')
+        await prisma.$executeRawUnsafe(`
+          CREATE TABLE "goals" (
+              "id" TEXT NOT NULL PRIMARY KEY,
+              "title" TEXT NOT NULL,
+              "description" TEXT,
+              "category" TEXT NOT NULL DEFAULT 'GENERAL',
+              "targetDate" DATETIME NOT NULL,
+              "status" TEXT NOT NULL DEFAULT 'IN_PROGRESS',
+              "completedAt" DATETIME,
+              "notifiedAt" DATETIME,
+              "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" DATETIME NOT NULL
+          )
+        `)
+        await prisma.$executeRawUnsafe(`CREATE INDEX "goals_status_idx" ON "goals"("status")`)
+        await prisma.$executeRawUnsafe(`CREATE INDEX "goals_targetDate_idx" ON "goals"("targetDate")`)
+      }
+
+      // 2. Check if pomodoroSessions column exists in tasks
+      const tasksInfo = await prisma.$queryRawUnsafe(`PRAGMA table_info("tasks")`)
+      const hasPomodoro = (tasksInfo as any[]).some((col: any) => col.name === 'pomodoroSessions')
+      if (!hasPomodoro) {
+        console.log('[DB] Applying migration: Adding pomodoroSessions to tasks...')
+        await prisma.$executeRawUnsafe(`ALTER TABLE "tasks" ADD COLUMN "pomodoroSessions" INTEGER NOT NULL DEFAULT 0`)
+      }
+    }
     console.log('[DB] Database connected successfully')
   } catch (error) {
     console.error('[DB] Database connection failed:', error)

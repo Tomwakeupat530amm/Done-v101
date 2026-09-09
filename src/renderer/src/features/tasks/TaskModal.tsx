@@ -123,6 +123,20 @@ export function TaskModal({ isOpen, onClose, task, defaultStatus = 'TODO', onSav
             </div>
           </div>
 
+          {task && (
+            <div className="p-3 rounded-xl bg-surface-overlay border border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🍅</span>
+                <div>
+                  <p className="text-xs font-semibold text-white">Pomodoro Tracker</p>
+                  <p className="text-[11px] text-[var(--color-text-muted)]">
+                    Đã hoàn thành <span className="font-bold text-rose-400">{task.pomodoroSessions || 0}</span> phiên
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="pt-4 flex justify-end gap-3">
             <button
               type="button"
@@ -144,3 +158,4 @@ export function TaskModal({ isOpen, onClose, task, defaultStatus = 'TODO', onSav
     </div>
   )
 }
+

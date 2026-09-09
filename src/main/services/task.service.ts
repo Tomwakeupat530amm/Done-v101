@@ -79,6 +79,16 @@ export class TaskService {
       }
     });
   }
+
+  async incrementPomodoro(id: string) {
+    return prisma.task.update({
+      where: { id },
+      data: {
+        pomodoroSessions: { increment: 1 }
+      }
+    });
+  }
 }
 
 export const taskService = new TaskService();
+

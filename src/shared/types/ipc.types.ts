@@ -167,6 +167,17 @@ export interface WindowApi {
     update: (id: string, dto: import('./task.types').UpdateTaskDto) => Promise<import('./task.types').Task>
     delete: (id: string) => Promise<void>
     updateOrder: (id: string, newStatus: import('./task.types').TaskStatus, newOrder: number) => Promise<import('./task.types').Task>
+    incrementPomodoro: (id: string) => Promise<import('./task.types').Task>
+  }
+  goal: {
+    getAll: () => Promise<import('./goal.types').Goal[]>
+    getDueGoals: () => Promise<import('./goal.types').Goal[]>
+    create: (dto: import('./goal.types').CreateGoalDto) => Promise<import('./goal.types').Goal>
+    update: (id: string, dto: import('./goal.types').UpdateGoalDto) => Promise<import('./goal.types').Goal>
+    delete: (id: string) => Promise<void>
+    markCompleted: (id: string) => Promise<import('./goal.types').Goal>
+    extendTargetDate: (id: string, newTargetDate: string) => Promise<import('./goal.types').Goal>
+    markNotified: (id: string) => Promise<import('./goal.types').Goal>
   }
   pin: {
     isEnabled: () => Promise<boolean>

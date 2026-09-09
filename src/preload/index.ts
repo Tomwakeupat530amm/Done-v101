@@ -75,7 +75,18 @@ const api = {
     create: (dto: import('../shared/types/task.types').CreateTaskDto) => ipcRenderer.invoke('task:create', dto),
     update: (id: string, dto: import('../shared/types/task.types').UpdateTaskDto) => ipcRenderer.invoke('task:update', { id, dto }),
     delete: (id: string) => ipcRenderer.invoke('task:delete', id),
-    updateOrder: (id: string, newStatus: string, newOrder: number) => ipcRenderer.invoke('task:updateOrder', { id, newStatus, newOrder })
+    updateOrder: (id: string, newStatus: string, newOrder: number) => ipcRenderer.invoke('task:updateOrder', { id, newStatus, newOrder }),
+    incrementPomodoro: (id: string) => ipcRenderer.invoke('task:incrementPomodoro', id)
+  },
+  goal: {
+    getAll: () => ipcRenderer.invoke('goal:getAll'),
+    getDueGoals: () => ipcRenderer.invoke('goal:getDueGoals'),
+    create: (dto: import('../shared/types/goal.types').CreateGoalDto) => ipcRenderer.invoke('goal:create', dto),
+    update: (id: string, dto: import('../shared/types/goal.types').UpdateGoalDto) => ipcRenderer.invoke('goal:update', { id, dto }),
+    delete: (id: string) => ipcRenderer.invoke('goal:delete', id),
+    markCompleted: (id: string) => ipcRenderer.invoke('goal:markCompleted', id),
+    extendTargetDate: (id: string, newTargetDate: string) => ipcRenderer.invoke('goal:extendTargetDate', { id, newTargetDate }),
+    markNotified: (id: string) => ipcRenderer.invoke('goal:markNotified', id)
   },
   pin: {
     isEnabled: () => ipcRenderer.invoke('pin:isEnabled'),

@@ -369,17 +369,40 @@ model Settings {
 // ─────────────────────────────────────────────────────────────
 
 model Task {
-  id          String       @id @default(uuid())
-  title       String
-  description String?      
-  status      String       @default("TODO")       // TaskStatus
-  priority    String       @default("MEDIUM")     // TaskPriority
-  order       Float        
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  completedAt DateTime?    
+  id               String       @id @default(uuid())
+  title            String
+  description      String?      
+  status           String       @default("TODO")       // TaskStatus
+  priority         String       @default("MEDIUM")     // TaskPriority
+  order            Float        
+  pomodoroSessions Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  completedAt      DateTime?    
 
   @@index([status])
   @@index([order])
   @@map("tasks")
 }
+
+// ─────────────────────────────────────────────────────────────
+// GOALS (Long-term)
+// ─────────────────────────────────────────────────────────────
+
+model Goal {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  category    String    @default("GENERAL")       // RECOVERY | HEALTH | CAREER | PERSONAL | GENERAL
+  targetDate  DateTime
+  status      String    @default("IN_PROGRESS")   // IN_PROGRESS | COMPLETED | EXTENDED | ABANDONED
+  completedAt DateTime?
+  notifiedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([targetDate])
+  @@map("goals")
+}
+
