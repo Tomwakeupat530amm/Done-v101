@@ -1,20 +1,17 @@
-// src/renderer/src/pages/DashboardPage.tsx
-// Dashboard — Command center. Aggregates all features into one unified view.
-
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import {
-  Sun, Moon, Sunset, BookOpen, Smile, ArrowRight,
+  Sun, Moon, Sunset, BookOpen, ArrowRight,
   CheckCircle2, ShieldCheck, ListTodo
 } from 'lucide-react'
 import { SobrietyCounter } from '../features/recovery/SobrietyCounter'
 import type { TodayHabitStatus } from '../../../shared/types/habit.types'
-import type { DailyLog } from '../../../shared/types/daily-log.types'
 import type { IdentityProfile } from '../../../shared/types/identity.types'
 import type { Task } from '../../../shared/types/task.types'
+import type { DailyAccomplishmentSummary } from '../../../shared/types/daily-log.types'
 
 function getGreeting(t: any): { text: string; icon: React.ReactNode } {
   const hour = new Date().getHours()
@@ -22,8 +19,6 @@ function getGreeting(t: any): { text: string; icon: React.ReactNode } {
   if (hour < 18) return { text: t('dashboard.goodAfternoon', 'Chào buổi chiều'), icon: <Sunset className="w-5 h-5 text-orange-400" /> }
   return { text: t('dashboard.goodEvening', 'Chào buổi tối'), icon: <Moon className="w-5 h-5 text-violet-400" /> }
 }
-
-const MOOD_EMOJI = ['', '😞', '😕', '😐', '😊', '😄']
 
 const card = "bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-2xl p-5"
 const fadeIn = (i: number) => ({
@@ -43,9 +38,9 @@ export default function DashboardPage() {
     queryFn: () => window.api.habits.getTodayStatus()
   })
 
-  const { data: dailyLog } = useQuery<DailyLog | null>({
-    queryKey: ['dailyLog', today],
-    queryFn: () => window.api.dailyLog.getByDate(today)
+  const { data: summary } = useQuery<DailyAccomplishmentSummary>({
+    queryKey: ['dailySummary', today],
+    queryFn: () => window.api.dailyLog.getSummary(today)
   })
 
   const { data: profile } = useQuery<IdentityProfile | null>({
@@ -60,8 +55,10 @@ export default function DashboardPage() {
 
   const completedHabits = habits.filter(h => h.isCompletedToday).length
   const totalHabits = habits.length
-  const hasJournal = !!dailyLog?.morningIntention
-  const morningMood = dailyLog?.mood ? { mood: dailyLog.mood, energy: dailyLog.energy } : null
+  const completedTasks = summary?.completedTasks || []
+  const completedTasksCount = completedTasks.length
+  const totalPomodoros = completedTasks.reduce((acc, t) => acc + (t.pomodoroSessions || 0), 0)
+  const hasJournal = !!summary?.log?.morningIntention
 
   return (
     <motion.div
@@ -82,19 +79,6 @@ export default function DashboardPage() {
       <motion.div {...fadeIn(0)}>
         <SobrietyCounter />
       </motion.div>
-
-      {/* Identity Statement */}
-      {profile?.identityStatement && (
-        <motion.div {...fadeIn(1)}
-          className="border border-indigo-500/20 bg-indigo-500/5 rounded-2xl px-6 py-4 cursor-pointer hover:bg-indigo-500/10 transition-colors"
-          onClick={() => navigate('/identity')}
-        >
-          <p className="text-xs text-indigo-400 font-medium uppercase tracking-widest mb-1">{t('dashboard.iam', 'Tôi là')}</p>
-          <p className="text-[var(--color-text-primary)] font-medium leading-relaxed">
-            {profile.identityStatement}
-          </p>
-        </motion.div>
-      )}
 
       {/* Grid cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -131,50 +115,62 @@ export default function DashboardPage() {
           )}
         </motion.div>
 
-        {/* Journal card */}
+        {/* Tasks Done card */}
         <motion.div {...fadeIn(3)}
+          className={`${card} cursor-pointer hover:border-emerald-500/40 transition-colors`}
+          onClick={() => navigate('/tasks')}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ListTodo className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-secondary)]">{t('dashboard.tasksDone', 'Tasks Done')}</span>
+            </div>
+            <ArrowRight className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+          </div>
+          {completedTasksCount === 0 ? (
+            <p className="text-[var(--color-text-muted)] text-sm">{t('dashboard.noTasksDone', 'Chưa hoàn thành task nào hôm nay')}</p>
+          ) : (
+            <>
+              <p className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
+                {completedTasksCount} <span className="text-emerald-400 text-lg font-semibold">Done</span>
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 mt-2">
+                {totalPomodoros > 0 ? (
+                  <span className="text-amber-400 font-medium">🍅 {totalPomodoros} Pomodoro tập trung</span>
+                ) : (
+                  <span>Đã chuyển sang DONE hôm nay</span>
+                )}
+              </p>
+            </>
+          )}
+        </motion.div>
+
+        {/* Journal card */}
+        <motion.div {...fadeIn(4)}
           className={`${card} cursor-pointer hover:border-violet-500/40 transition-colors`}
           onClick={() => navigate('/journal')}
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-violet-400" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-secondary)]">{t('nav.journal', 'Journal')}</span>
+              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-secondary)]">{t('nav.journal', 'Nhật ký')}</span>
             </div>
             <ArrowRight className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
           </div>
           {hasJournal ? (
             <>
-              <p className="text-[var(--color-text-primary)] text-sm leading-relaxed line-clamp-3">
-                {dailyLog?.morningIntention}
+              <p className="text-[var(--color-text-primary)] text-sm leading-relaxed line-clamp-2">
+                {summary?.log?.morningIntention}
+              </p>
+              <p className="text-[10px] text-amber-400/90 mt-2 font-medium">
+                🎯 Mục tiêu trọng tâm hôm nay
               </p>
             </>
           ) : (
-            <p className="text-[var(--color-text-muted)] text-sm">{t('dashboard.notWrittenIntention', 'Chưa viết intention sáng nay')}</p>
-          )}
-        </motion.div>
-
-        {/* Mood card */}
-        <motion.div {...fadeIn(4)}
-          className={`${card} cursor-pointer hover:border-cyan-500/40 transition-colors`}
-          onClick={() => navigate('/journal')}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Smile className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-secondary)]">{t('dashboard.mood', 'Tâm trạng')}</span>
-            </div>
-            <ArrowRight className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-          </div>
-          {morningMood ? (
             <>
-              <p className="text-4xl mb-1">{MOOD_EMOJI[morningMood.mood]}</p>
-              <p className="text-xs text-[var(--color-text-muted)]">
-                {t('dashboard.energy', 'Năng lượng')}: {morningMood.energy}/5
-              </p>
+              <p className="text-[var(--color-text-muted)] text-sm">{t('dashboard.notWrittenIntention', 'Chưa viết mục tiêu sáng nay')}</p>
+              <p className="text-[10px] text-indigo-400 mt-2 font-medium">+ Bấm để mở nhật ký</p>
             </>
-          ) : (
-            <p className="text-[var(--color-text-muted)] text-sm">{t('dashboard.notLoggedMood', 'Chưa log tâm trạng hôm nay')}</p>
           )}
         </motion.div>
       </div>

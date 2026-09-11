@@ -1,9 +1,9 @@
 {
-  "name": "atomic-recovery",
+  "name": "done",
   "version": "0.1.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "Done - Habit and Productivity Tracker",
   "main": "./out/main/index.js",
-  "author": "example.com",
+  "author": "Done",
   "homepage": "https://electron-vite.org",
   "scripts": {
     "format": "prettier --write .",
@@ -18,7 +18,8 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:all": "npm run build && electron-builder -mw",
     "build:linux": "electron-vite build && electron-builder --linux",
     "db:seed": "tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",

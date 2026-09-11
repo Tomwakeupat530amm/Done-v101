@@ -60,6 +60,58 @@ export class AnalyticsService {
     return { completionRate, totalCompleted, totalPossible, byDay, habitCount: habits.length }
   }
 
+  // ─── Task completion & Pomodoro stats for 7 days ───────────────
+  async getTaskWeekStats(days = 7) {
+    const today = new Date()
+    const dates = Array.from({ length: days }, (_, i) =>
+      format(subDays(today, days - 1 - i), 'yyyy-MM-dd')
+    )
+    const startDate = new Date(`${dates[0]}T00:00:00.000`)
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        status: 'DONE',
+        completedAt: { gte: startDate }
+      },
+      select: {
+        completedAt: true,
+        pomodoroSessions: true
+      }
+    })
+
+    const byDayMap = new Map<string, { completedTasks: number; pomodoroCount: number }>()
+    for (const d of dates) {
+      byDayMap.set(d, { completedTasks: 0, pomodoroCount: 0 })
+    }
+
+    let totalCompleted = 0
+    let totalPomodoro = 0
+
+    for (const t of tasks) {
+      if (!t.completedAt) continue
+      const dateKey = format(t.completedAt, 'yyyy-MM-dd')
+      if (byDayMap.has(dateKey)) {
+        const item = byDayMap.get(dateKey)!
+        item.completedTasks += 1
+        item.pomodoroCount += t.pomodoroSessions || 0
+        totalCompleted += 1
+        totalPomodoro += t.pomodoroSessions || 0
+      }
+    }
+
+    const byDay = dates.map(date => ({
+      date,
+      completedTasks: byDayMap.get(date)!.completedTasks,
+      pomodoroCount: byDayMap.get(date)!.pomodoroCount
+    }))
+
+    return {
+      totalCompleted,
+      totalPomodoro,
+      byDay
+    }
+  }
+
   // ─── Recovery summary ──────────────────────────────────────────
   async getRecoverySummary() {
     const [activeSession, milestones, urgeStats, relapseCount] = await Promise.all([

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X, Target } from 'lucide-react'
 import type { Goal, CreateGoalDto, UpdateGoalDto, GoalCategory } from '../../../../shared/types/goal.types'
 
@@ -10,6 +11,7 @@ interface GoalModalProps {
 }
 
 export function GoalModal({ isOpen, onClose, goal, onSave }: GoalModalProps) {
+  const { t } = useTranslation()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<GoalCategory>('GENERAL')
@@ -67,7 +69,7 @@ export function GoalModal({ isOpen, onClose, goal, onSave }: GoalModalProps) {
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5 text-[var(--color-brand)]" />
             <h2 className="text-lg font-bold text-text-primary">
-              {goal ? 'Chỉnh Sửa Mục Tiêu' : 'Thêm Mục Tiêu Dài Hạn Mới'}
+              {goal ? t('goals.editTitle') : t('goals.createTitle')}
             </h2>
           </div>
           <button
@@ -81,7 +83,7 @@ export function GoalModal({ isOpen, onClose, goal, onSave }: GoalModalProps) {
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-              Tên mục tiêu *
+              {t('goals.titleLabel')}
             </label>
             <input
               type="text"
@@ -89,43 +91,43 @@ export function GoalModal({ isOpen, onClose, goal, onSave }: GoalModalProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full bg-surface-overlay border border-surface-border rounded-xl px-3.5 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand transition-colors text-sm"
-              placeholder="ví dụ: Đạt mốc 90 ngày kiên trì, Chạy bộ 21km..."
+              placeholder={t('goals.titlePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-              Lý do & Động lực (Tùy chọn)
+              {t('goals.descLabel')}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full bg-surface-overlay border border-surface-border rounded-xl px-3.5 py-2 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand transition-colors resize-none h-20 text-sm"
-              placeholder="Tại sao mục tiêu này quan trọng với bạn?"
+              placeholder={t('goals.descPlaceholder')}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                Danh mục
+                {t('goals.categorySelectLabel')}
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as GoalCategory)}
                 className="w-full bg-surface-overlay border border-surface-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:border-brand transition-colors text-sm cursor-pointer"
               >
-                <option value="RECOVERY">Phục hồi</option>
-                <option value="HEALTH">Sức khỏe</option>
-                <option value="CAREER">Sự nghiệp</option>
-                <option value="PERSONAL">Bản thân</option>
-                <option value="GENERAL">Chung</option>
+                <option value="RECOVERY">{t('goals.catRecovery')}</option>
+                <option value="HEALTH">{t('goals.catHealth')}</option>
+                <option value="CAREER">{t('goals.catCareer')}</option>
+                <option value="PERSONAL">{t('goals.catPersonal')}</option>
+                <option value="GENERAL">{t('goals.catGeneral')}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                Ngày hoàn thành *
+                {t('goals.targetDateLabel')}
               </label>
               <input
                 type="date"
@@ -143,14 +145,14 @@ export function GoalModal({ isOpen, onClose, goal, onSave }: GoalModalProps) {
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
             >
-              Hủy
+              {t('goals.cancelBtn')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !title.trim() || !targetDate}
               className="px-5 py-2 text-sm font-semibold bg-brand hover:bg-brand-dim text-white rounded-xl transition-all shadow-lg shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {isSubmitting ? 'Đang lưu...' : goal ? 'Lưu Thay Đổi' : 'Tạo Mục Tiêu'}
+              {isSubmitting ? t('goals.savingBtn') : t('goals.saveBtn')}
             </button>
           </div>
         </form>

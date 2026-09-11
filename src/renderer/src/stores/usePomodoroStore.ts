@@ -160,6 +160,14 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
       playTingSound(1.0)
 
       if (state.mode === 'WORK') {
+        // Send desktop notification
+        window.api.notification?.send(
+          'Pomodoro Hoàn Thành! 🍅',
+          state.activeTaskTitle
+            ? `Đã xong phiên tập trung cho "${state.activeTaskTitle}". Hãy nghỉ ngơi nhé!`
+            : 'Bạn đã hoàn thành phiên tập trung 25 phút. Hãy nghỉ ngơi 5 phút nhé!'
+        ).catch(() => {})
+
         // Increment pomodoro count in DB for task if active
         if (state.activeTaskId) {
           window.api.task.incrementPomodoro(state.activeTaskId).catch((err) => {
@@ -182,6 +190,11 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
         })
       } else {
         // Break is over
+        window.api.notification?.send(
+          'Hết Giờ Nghỉ! ⚡',
+          'Thời gian giải lao đã kết thúc. Hãy sẵn sàng cho phiên tập trung tiếp theo!'
+        ).catch(() => {})
+
         const nextMode: PomodoroMode = 'WORK'
         const workMinutes = state.preset === 'CUSTOM'
           ? state.customWorkMinutes

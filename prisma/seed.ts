@@ -54,7 +54,7 @@ async function main(): Promise<void> {
 
     const profile = await prisma.identityProfile.create({
       data: {
-        displayName: isVi ? 'Người Phục Hồi' : 'Recovery Warrior',
+        displayName: 'Doer',
         identityStatement: isVi ? 'Tôi đang trở thành người kỷ luật và tự do.' : 'I am building a life I do not need to escape from.',
         coreValues: isVi ? JSON.stringify(['Kỷ luật', 'Tự do', 'Sức mạnh']) : JSON.stringify(['Discipline', 'Growth', 'Freedom']),
         xpPoints: 0,

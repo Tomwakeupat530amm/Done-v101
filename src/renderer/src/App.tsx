@@ -18,7 +18,6 @@ import { useLockStore } from './stores/lockStore'
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const RecoveryPage = lazy(() => import('./pages/RecoveryPage'))
 const HabitsPage = lazy(() => import('./pages/HabitsPage'))
-const IdentityPage = lazy(() => import('./pages/IdentityPage'))
 const JournalPage = lazy(() => import('./pages/JournalPage'))
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
 const TasksPage = lazy(() => import('./pages/TasksPage'))
@@ -27,6 +26,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 
 import { PomodoroBar } from './features/tasks/PomodoroBar'
 import { DueGoalModal } from './features/goals/DueGoalModal'
+import { QuickAddModal } from './components/QuickAddModal'
 import { useState } from 'react'
 import type { Goal } from '../../shared/types/goal.types'
 
@@ -49,6 +49,23 @@ export default function App() {
   const { i18n } = useTranslation()
 
   const [activeDueGoal, setActiveDueGoal] = useState<Goal | null>(null)
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false)
+
+  // Listen for quick-add global shortcut & in-app shortcut (Cmd/Ctrl + K)
+  useEffect(() => {
+    window.api.onQuickAdd(() => {
+      setIsQuickAddOpen(true)
+    })
+
+    const handleInAppShortcut = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsQuickAddOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleInAppShortcut)
+    return () => window.removeEventListener('keydown', handleInAppShortcut)
+  }, [])
 
   // Check PIN, settings and due goals on startup
   useEffect(() => {
@@ -59,6 +76,15 @@ export default function App() {
     window.api.settings.get().then(settings => {
       if (settings?.language) {
         i18n.changeLanguage(settings.language)
+      }
+      if (settings?.accentColor) {
+        document.documentElement.style.setProperty('--color-brand', settings.accentColor)
+        document.documentElement.style.setProperty('--color-primary', settings.accentColor)
+        document.documentElement.style.setProperty('--color-ring', settings.accentColor)
+        document.documentElement.style.setProperty('--color-brand-glow', `${settings.accentColor}26`)
+      }
+      if (settings?.compactMode !== undefined) {
+        document.documentElement.classList.toggle('compact-mode', !!settings.compactMode)
       }
     }).catch(() => {})
 
@@ -134,14 +160,6 @@ export default function App() {
               }
             />
             <Route
-              path="/identity"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <IdentityPage />
-                </Suspense>
-              }
-            />
-            <Route
               path="/journal"
               element={
                 <Suspense fallback={<PageLoader />}>
@@ -180,6 +198,12 @@ export default function App() {
           onClose={() => setActiveDueGoal(null)}
           onComplete={handleCompleteDueGoal}
           onExtend={handleExtendDueGoal}
+        />
+
+        {/* Global Quick-Add Spotlight HUD */}
+        <QuickAddModal
+          isOpen={isQuickAddOpen}
+          onClose={() => setIsQuickAddOpen(false)}
         />
 
         {/* Global toast notifications */}

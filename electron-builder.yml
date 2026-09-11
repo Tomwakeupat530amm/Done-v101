@@ -1,6 +1,6 @@
-appId: com.atomicrecovery.app
-productName: Atomic Recovery
-copyright: Copyright © 2026 Atomic Recovery
+appId: com.done.app
+productName: Done
+copyright: Copyright © 2026 Done
 
 directories:
   buildResources: build
@@ -19,6 +19,8 @@ files:
   - '!docs'
 
 extraResources:
+  - from: 'resources/icon.png'
+    to: 'icon.png'
   - from: 'prisma/prod.db'
     to: 'prod.db'
   - from: node_modules/.prisma/
@@ -38,7 +40,7 @@ asarUnpack:
   - resources/**
 
 win:
-  executableName: atomic-recovery
+  executableName: done
   icon: build/icon.png
 nsis:
   artifactName: ${productName}-Setup-${version}.${ext}
@@ -49,13 +51,20 @@ nsis:
   allowToChangeInstallationDirectory: true
 
 mac:
+  entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  category: public.app-category.productivity
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
   notarize: false
   icon: build/icon.png
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
 dmg:
-  artifactName: ${productName}-${version}.${ext}
+  artifactName: ${productName}-${version}-${arch}.${ext}
 
 linux:
   target:

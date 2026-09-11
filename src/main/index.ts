@@ -1,26 +1,99 @@
 // src/main/index.ts
 // Atomic Recovery — Main Process Entry
 
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, Menu } from 'electron'
 import { join } from 'path'
+import * as fs from 'fs'
 import { registerAllIpcHandlers } from './ipc'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { disconnectPrisma, getPrismaClient } from './database/prisma.client'
+import { notificationService } from './services/notification.service'
+import { trayService } from './services/tray.service'
+import { quickAddService } from './services/quick-add.service'
 
 import { registerEmergencyShortcut, unregisterEmergencyShortcut } from './ipc/emergency.handler'
 
+let mainWindow: BrowserWindow | null = null
+const isMac = process.platform === 'darwin'
+
+function setupApplicationMenu(): void {
+  if (isMac) {
+    const template: Electron.MenuItemConstructorOptions[] = [
+      {
+        label: app.name,
+        submenu: [
+          { role: 'about' },
+          { type: 'separator' },
+          { role: 'services' },
+          { type: 'separator' },
+          { role: 'hide' },
+          { role: 'hideOthers' },
+          { role: 'unhide' },
+          { type: 'separator' },
+          { role: 'quit' }
+        ]
+      },
+      {
+        label: 'Edit',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'selectAll' }
+        ]
+      },
+      {
+        label: 'View',
+        submenu: [
+          { role: 'reload' },
+          { role: 'forceReload' },
+          { role: 'toggleDevTools' },
+          { type: 'separator' },
+          { role: 'resetZoom' },
+          { role: 'zoomIn' },
+          { role: 'zoomOut' },
+          { type: 'separator' },
+          { role: 'togglefullscreen' }
+        ]
+      },
+      {
+        label: 'Window',
+        submenu: [
+          { role: 'minimize' },
+          { role: 'zoom' },
+          { role: 'close' }
+        ]
+      }
+    ]
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+  }
+}
+
 function createWindow(): void {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
+    title: 'Done',
     width: 1280,
     height: 800,
     minWidth: 900,
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
-    frame: false, // Frameless — custom TitleBar
+    ...(isMac
+      ? {
+          titleBarStyle: 'hiddenInset' as const,
+          trafficLightPosition: { x: 16, y: 12 },
+          vibrancy: 'under-window' as const
+        }
+      : {
+          frame: false,
+          backgroundMaterial: 'acrylic' as const
+        }),
     backgroundColor: '#0A0A0F',
-    ...(process.platform === 'linux' ? { icon } : {}),
+    icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -30,7 +103,11 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
+  })
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -49,17 +126,27 @@ function createWindow(): void {
   registerEmergencyShortcut(mainWindow)
 }
 
-// ─── IPC Handlers ──────────────────────────────────────────────
+// ─── Single Instance Lock & App Lifecycle ───────────────────────
 
-// ping handler has been moved to registerAllIpcHandlers
+const gotTheLock = app.requestSingleInstanceLock()
 
-// ─── App Lifecycle ─────────────────────────────────────────────
+if (!gotTheLock) {
+  console.log('[App] Another instance of Done is already running. Quitting duplicate instance.')
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.show()
+      mainWindow.focus()
+    }
+  })
 
-app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('com.atomic-recovery')
+  app.whenReady().then(async () => {
+    electronApp.setAppUserModelId('com.atomic-recovery')
 
-  // Initialize database — validate schema before opening the window
-  try {
+    // Initialize database — validate schema before opening the window
+    try {
     const prisma = getPrismaClient()
     // Validate the schema is intact by checking a core table
     const rows = await prisma.$queryRaw`SELECT name FROM sqlite_master WHERE type='table' AND name='habits'`
@@ -69,10 +156,10 @@ app.whenReady().then(async () => {
       // Table missing → db is corrupt or empty; restore from template
       console.error('[DB] Schema missing! Restoring database from template...')
       await prisma.$disconnect()
-      const { join } = await import('path')
-      const { app: electronApp } = await import('electron')
-      const fs = await import('fs')
-      const userDataPath = electronApp.getPath('userData')
+      const userDataPath = app.getPath('userData')
+      if (!fs.existsSync(userDataPath)) {
+        fs.mkdirSync(userDataPath, { recursive: true })
+      }
       const dbPath = join(userDataPath, 'atomic-recovery.db')
       const templatePath = join(process.resourcesPath, 'prod.db')
       // Force overwrite regardless of size
@@ -122,24 +209,49 @@ app.whenReady().then(async () => {
   // Register all IPC handlers before creating window
   registerAllIpcHandlers()
 
+  // Start background notifications
+  notificationService.start()
+
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  setupApplicationMenu()
   createWindow()
 
+  if (mainWindow) {
+    trayService.init(mainWindow)
+    quickAddService.register(mainWindow)
+  }
+
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+      if (mainWindow) {
+        trayService.init(mainWindow)
+        quickAddService.register(mainWindow)
+      }
+    } else if (mainWindow) {
+      mainWindow.show()
+      mainWindow.focus()
+    }
   })
 })
 
-app.on('will-quit', () => {
-  unregisterEmergencyShortcut()
+app.on('before-quit', async () => {
+  await disconnectPrisma()
 })
 
-app.on('window-all-closed', async () => {
-  await disconnectPrisma()
+app.on('will-quit', () => {
+  notificationService.stop()
+  unregisterEmergencyShortcut()
+  quickAddService.unregister()
+  trayService.destroy()
+})
+
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
+}

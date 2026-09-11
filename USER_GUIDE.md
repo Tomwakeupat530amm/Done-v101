@@ -134,5 +134,12 @@ Khi gặp cơn thôi thúc dồn dập hoặc nguy cơ tái phát cao:
 
 1. **Bắt đầu thật nhỏ:** Đừng cố thay đổi tất cả cùng lúc. Hãy tạo 1-2 thói quen chỉ mất dưới 2 phút mỗi ngày.
 2. **Không bỏ lỡ 2 lần liên tiếp:** Nếu lỡ quên hoặc trượt chân 1 ngày, hãy quay lại ngay vào ngày hôm sau.
-3. **Dùng phím tắt `Ctrl + E` phản xạ:** Hãy tập mở chế độ khẩn cấp bất cứ khi nào thấy tâm trí bắt đầu dao động.
-4. **Dữ liệu an toàn:** Vì ứng dụng lưu trữ hoàn toàn trên máy tính của bạn (`dev.db` hoặc thư mục `AppData`), định kỳ hãy vào Cài đặt và bấm **Xuất dữ liệu** để lưu trữ một bản sao nhé!
+3. **Dùng phím tắt phản xạ:**
+   - **`Ctrl + E`** (Mac: **`⌘ + E`**): Kích hoạt chế độ cứu trợ khẩn cấp (SOS).
+   - **`Ctrl + Shift + Space`** (Mac: **`⌘ + Shift + Space`**) hoặc **`Ctrl/⌘ + K`**: Mở nhanh thanh tìm kiếm & tạo việc Spotlight HUD.
+4. **Hướng dẫn cài đặt trên macOS:**
+   - Sau khi tải file `.dmg`, kéo ứng dụng **Done** vào thư mục **Applications**.
+   - Nếu macOS hiển thị thông báo *"App is damaged"* hoặc *"Unidentified developer"* do cơ chế Gatekeeper:
+     - **Cách 1:** Nhấp chuột phải (hoặc Control-click) vào icon Done trong Applications -> Chọn **Open** -> Chọn **Open** lần nữa.
+     - **Cách 2:** Mở Terminal và dán lệnh: `xattr -cr /Applications/Done.app`
+5. **Dữ liệu an toàn:** Vì ứng dụng lưu trữ hoàn toàn trên máy tính của bạn (`dev.db` hoặc thư mục `AppData` / `Application Support`), định kỳ hãy vào Cài đặt và bấm **Xuất dữ liệu** để lưu trữ một bản sao nhé!

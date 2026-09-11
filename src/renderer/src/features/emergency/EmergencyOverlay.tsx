@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShieldAlert, X, Activity, CheckCircle2, RotateCcw } from 'lucide-react'
-import { useEmergencyStore } from '../../store/useEmergencyStore'
+import { useAppStore } from '../../stores/appStore'
 import { useMutation } from '@tanstack/react-query'
 import type { LogUrgeDto } from '../../../../shared/dtos/emergency.dto'
 import { useTranslation } from 'react-i18next'
 
 export function EmergencyOverlay() {
-  const { isEmergencyActive, closeEmergency } = useEmergencyStore()
+  const { isEmergencyOpen, closeEmergency } = useAppStore()
   const [timeLeft, setTimeLeft] = useState(15 * 60) // 15 minutes
   const [timerActive, setTimerActive] = useState(false)
   const { t } = useTranslation()
@@ -30,13 +30,13 @@ export function EmergencyOverlay() {
 
   // Start timer automatically when emergency opens
   useEffect(() => {
-    if (isEmergencyActive) {
+    if (isEmergencyOpen) {
       setTimeLeft(15 * 60)
       setTimerActive(true)
     } else {
       setTimerActive(false)
     }
-  }, [isEmergencyActive])
+  }, [isEmergencyOpen])
 
   // Timer logic
   useEffect(() => {
@@ -52,7 +52,7 @@ export function EmergencyOverlay() {
   // IPC listener for global shortcut
   useEffect(() => {
     window.api.onEmergencyActivated(() => {
-      useEmergencyStore.getState().triggerEmergency()
+      useAppStore.getState().openEmergency()
     })
   }, [])
 
@@ -81,7 +81,7 @@ export function EmergencyOverlay() {
 
   return (
     <AnimatePresence>
-      {isEmergencyActive && (
+      {isEmergencyOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -10,7 +10,6 @@ import {
   Shield,
   CheckSquare,
   ListTodo,
-  User,
   BookOpen,
   Activity,
   Settings,
@@ -19,10 +18,20 @@ import {
   Target
 } from 'lucide-react'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
+import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '../../stores/appStore'
+import logoImg from '../../assets/logo.png'
 
 export function Sidebar() {
   const { isSidebarCollapsed, toggleSidebar, openEmergency } = useAppStore()
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => window.api.settings.get()
+  })
+  const { data: profile } = useQuery({
+    queryKey: ['identityProfile'],
+    queryFn: () => window.api.identity.getProfile()
+  })
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 
@@ -31,11 +40,10 @@ export function Sidebar() {
     { path: '/recovery', label: t('nav.recovery', 'Recovery'), icon: Shield, shortcut: '2' },
     { path: '/habits', label: t('nav.habits', 'Habits'), icon: CheckSquare, shortcut: '3' },
     { path: '/tasks', label: t('nav.tasks', 'Tasks'), icon: ListTodo, shortcut: '4' },
-    { path: '/goals', label: t('nav.goals', 'Mục tiêu'), icon: Target, shortcut: '5' },
-    { path: '/identity', label: t('nav.identity', 'Identity'), icon: User, shortcut: '6' },
-    { path: '/journal', label: t('nav.journal', 'Daily Log'), icon: BookOpen, shortcut: '7' },
-    { path: '/analytics', label: t('nav.analytics', 'Analytics'), icon: Activity, shortcut: '8' },
-    { path: '/settings', label: t('nav.settings', 'Settings'), icon: Settings, shortcut: '9' }
+    { path: '/goals', label: t('nav.goals', 'Goals'), icon: Target, shortcut: '5' },
+    { path: '/journal', label: t('nav.journal', 'Journal'), icon: BookOpen, shortcut: '6' },
+    { path: '/analytics', label: t('nav.analytics', 'Analytics'), icon: Activity, shortcut: '7' },
+    { path: '/settings', label: t('nav.settings', 'Settings'), icon: Settings, shortcut: '8' }
   ]
 
   const handleLanguageChange = (value: string) => {
@@ -89,29 +97,31 @@ export function Sidebar() {
         height: '100%'
       }}
     >
-      {/* Toggle collapse button */}
+      {/* Toggle collapse button & Brand */}
       <div
         className="flex items-center px-3 py-2"
         style={{ height: 44, borderBottom: '1px solid var(--color-surface-border)' }}
       >
         <AnimatePresence mode="wait">
           {!isSidebarCollapsed && (
-            <motion.span
-              key="label"
+            <motion.div
+              key="brand"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.15 }}
-              className="text-xs font-semibold tracking-widest uppercase ml-2 flex-1"
-              style={{ color: 'var(--color-text-muted)' }}
+              className="flex items-center gap-2 ml-1 flex-1"
             >
-              {t('nav.navigation', 'Navigation')}
-            </motion.span>
+              <img src={logoImg} alt="Done" className="w-5 h-5 rounded-md object-contain" />
+              <span className="text-sm font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+                Done
+              </span>
+            </motion.div>
           )}
         </AnimatePresence>
         <button
           onClick={toggleSidebar}
-          className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150"
+          className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ml-auto"
           style={{ color: 'var(--color-text-muted)' }}
           title={isSidebarCollapsed ? `${t('nav.expand', 'Expand')} (Ctrl+\\)` : `${t('nav.collapse', 'Collapse')} (Ctrl+\\)`}
         >
@@ -201,42 +211,44 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Emergency button — always visible */}
-      <div className="p-2" style={{ borderTop: '1px solid var(--color-surface-border)' }}>
-        <motion.button
-          onClick={openEmergency}
-          className="w-full flex items-center gap-3 rounded-md font-medium text-sm transition-all"
-          animate={{
-            backgroundColor: ['rgba(239,68,68,0.08)', 'rgba(239,68,68,0.14)', 'rgba(239,68,68,0.08)']
-          }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-          whileHover={{ scale: 1.01, backgroundColor: 'rgba(239,68,68,0.22)' }}
-          whileTap={{ scale: 0.98 }}
-          style={{
-            height: 36,
-            padding: isSidebarCollapsed ? '0 10px' : '0 10px',
-            color: '#f87171',
-            justifyContent: isSidebarCollapsed ? 'center' : 'flex-start'
-          }}
-          title={isSidebarCollapsed ? `${t('nav.emergencyMode', 'Emergency Mode')} (Ctrl+E)` : undefined}
-        >
-          <Zap className="flex-shrink-0" style={{ width: 16, height: 16 }} />
-          <AnimatePresence mode="wait">
-            {!isSidebarCollapsed && (
-              <motion.span
-                key="label"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 'auto' }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.15 }}
-                className="whitespace-nowrap"
-              >
-                {t('nav.emergency', 'Emergency')}
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </motion.button>
-      </div>
+      {/* Emergency button — visible according to settings */}
+      {settings?.emergencyButtonVisible !== false && (
+        <div className="p-2" style={{ borderTop: '1px solid var(--color-surface-border)' }}>
+          <motion.button
+            onClick={openEmergency}
+            className="w-full flex items-center gap-3 rounded-md font-medium text-sm transition-all"
+            animate={{
+              backgroundColor: ['rgba(239,68,68,0.08)', 'rgba(239,68,68,0.14)', 'rgba(239,68,68,0.08)']
+            }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+            whileHover={{ scale: 1.01, backgroundColor: 'rgba(239,68,68,0.22)' }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              height: 36,
+              padding: isSidebarCollapsed ? '0 10px' : '0 10px',
+              color: '#f87171',
+              justifyContent: isSidebarCollapsed ? 'center' : 'flex-start'
+            }}
+            title={isSidebarCollapsed ? `${t('nav.emergencyMode', 'Emergency Mode')} (Ctrl+E)` : undefined}
+          >
+            <Zap className="flex-shrink-0" style={{ width: 16, height: 16 }} />
+            <AnimatePresence mode="wait">
+              {!isSidebarCollapsed && (
+                <motion.span
+                  key="label"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="whitespace-nowrap"
+                >
+                  {t('nav.emergency', 'Emergency')}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+        </div>
+      )}
 
       {/* User profile & Language */}
       <AnimatePresence mode="wait">
@@ -253,16 +265,16 @@ export function Sidebar() {
             <div className="flex items-center gap-2 min-w-0">
               <div
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff' }}
+                style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}
               >
-                AR
+                {profile?.displayName ? profile.displayName.charAt(0).toUpperCase() : 'D'}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
-                  {t('nav.userProfile', 'Người Phục Hồi')}
+                  {profile?.displayName || t('nav.userProfile', 'Doer')}
                 </span>
                 <span className="text-xs truncate" style={{ color: 'var(--color-text-muted)' }}>
-                  Level 1
+                  Level {profile?.level || 1}
                 </span>
               </div>
             </div>

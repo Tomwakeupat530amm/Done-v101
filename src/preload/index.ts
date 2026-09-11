@@ -40,6 +40,10 @@ const api = {
   dailyLog: {
     getByDate: (date: string) => invoke('dailyLog:getByDate', { date }),
     getAll: () => invoke('dailyLog:getAll'),
+    getSummary: (date: string) => invoke('dailyLog:getSummary', { date }),
+    getAllFeed: () => invoke('dailyLog:getAllFeed'),
+    saveMorning: (date: string, morningIntention: string) => invoke('dailyLog:saveMorning', { date, morningIntention }),
+    saveEvening: (date: string, reflection: string) => invoke('dailyLog:saveEvening', { date, reflection }),
     create: (dto: unknown) => invoke('dailyLog:create', dto),
     update: (id: string, dto: unknown) => invoke('dailyLog:update', { id, data: dto })
   },
@@ -59,7 +63,13 @@ const api = {
   // ─── Settings ────────────────────────────────────────────────
   settings: {
     get: () => invoke('settings:get'),
-    update: (data: unknown) => invoke('settings:update', data)
+    update: (data: unknown) => invoke('settings:update', data),
+    exportBackup: () => invoke('settings:exportBackup'),
+    importBackup: () => invoke('settings:importBackup'),
+    testNotification: () => invoke('settings:testNotification')
+  },
+  notification: {
+    send: (title: string, body: string) => ipcRenderer.invoke('notification:send', title, body)
   },
 
   // ─── Analytics ────────────────────────────────────────────
@@ -67,7 +77,8 @@ const api = {
     getMoodTrend: (days?: number) => ipcRenderer.invoke('analytics:getMoodTrend', days),
     getHabitWeekStats: () => ipcRenderer.invoke('analytics:getHabitWeekStats'),
     getRecoverySummary: () => ipcRenderer.invoke('analytics:getRecoverySummary'),
-    getJournalStreak: () => ipcRenderer.invoke('analytics:getJournalStreak')
+    getJournalStreak: () => ipcRenderer.invoke('analytics:getJournalStreak'),
+    getTaskWeekStats: (days?: number) => ipcRenderer.invoke('analytics:getTaskWeekStats', days)
   },
   task: {
     getAll: () => ipcRenderer.invoke('task:getAll'),
@@ -95,9 +106,23 @@ const api = {
     disable: () => ipcRenderer.invoke('pin:disable')
   },
 
+  // ─── Platform & Desktop Innovations ──────────────────────────
+  platform: process.platform,
+  tray: {
+    updatePomodoro: (timeLeftFormatted: string | null, isRunning: boolean) =>
+      ipcRenderer.invoke('tray:updatePomodoro', timeLeftFormatted, isRunning)
+  },
+  badge: {
+    updateDock: (count: number) => ipcRenderer.invoke('badge:updateDock', count),
+    updateProgress: (progress: number) => ipcRenderer.invoke('badge:updateProgress', progress)
+  },
+
   // ─── Events ──────────────────────────────────────────────────
   onEmergencyActivated: (callback: () => void) => {
     ipcRenderer.on('emergency:activated', () => callback())
+  },
+  onQuickAdd: (callback: () => void) => {
+    ipcRenderer.on('quick-add:open', () => callback())
   }
 }
 

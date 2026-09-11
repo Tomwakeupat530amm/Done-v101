@@ -16,6 +16,10 @@ export function registerEmergencyHandlers(): void {
 export function registerEmergencyShortcut(mainWindow: BrowserWindow): void {
   const shortcut = 'CommandOrControl+E'
   
+  try {
+    globalShortcut.unregister(shortcut)
+  } catch (_) {}
+
   const registered = globalShortcut.register(shortcut, () => {
     console.log(`[Emergency] Global shortcut ${shortcut} triggered`)
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -27,7 +31,7 @@ export function registerEmergencyShortcut(mainWindow: BrowserWindow): void {
   })
 
   if (!registered) {
-    console.error('[Emergency] Failed to register global shortcut CommandOrControl+E')
+    console.warn('[Emergency] Global shortcut CommandOrControl+E is occupied by another app or instance')
   } else {
     console.log('[Emergency] Global shortcut registered')
   }

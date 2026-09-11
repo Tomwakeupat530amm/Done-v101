@@ -105,6 +105,7 @@ export interface IpcChannels {
   'analytics:getHabitWeekStats': { input: void; output: HabitWeekStats }
   'analytics:getRecoverySummary': { input: void; output: RecoverySummary }
   'analytics:getJournalStreak': { input: void; output: JournalStreakData }
+  'analytics:getTaskWeekStats': { input: number | undefined; output: TaskWeekStats }
 
   // PIN
   'pin:isEnabled': { input: void; output: boolean }
@@ -137,6 +138,10 @@ export interface WindowApi {
   dailyLog: {
     getByDate: (date: string) => Promise<DailyLog | null>
     getAll: () => Promise<DailyLog[]>
+    getSummary: (date: string) => Promise<import('./daily-log.types').DailyAccomplishmentSummary>
+    getAllFeed: () => Promise<import('./daily-log.types').DailyAccomplishmentSummary[]>
+    saveMorning: (date: string, morningIntention: string) => Promise<DailyLog>
+    saveEvening: (date: string, reflection: string) => Promise<DailyLog>
     create: (dto: CreateDailyLogDto) => Promise<DailyLog>
     update: (id: string, dto: UpdateDailyLogDto) => Promise<DailyLog>
   }
@@ -153,12 +158,19 @@ export interface WindowApi {
   settings: {
     get: () => Promise<AppSettings>
     update: (data: Partial<AppSettings>) => Promise<AppSettings>
+    exportBackup: () => Promise<{ success: boolean; canceled?: boolean; filePath?: string; lastBackupAt?: string; error?: string }>
+    importBackup: () => Promise<{ success: boolean; canceled?: boolean; error?: string }>
+    testNotification: () => Promise<{ success: boolean }>
+  }
+  notification: {
+    send: (title: string, body: string) => Promise<{ success: boolean }>
   }
   analytics: {
     getMoodTrend: (days?: number) => Promise<MoodTrendDay[]>
     getHabitWeekStats: () => Promise<HabitWeekStats>
     getRecoverySummary: () => Promise<RecoverySummary>
     getJournalStreak: () => Promise<JournalStreakData>
+    getTaskWeekStats: (days?: number) => Promise<TaskWeekStats>
   }
   task: {
     getAll: () => Promise<import('./task.types').Task[]>
@@ -185,7 +197,16 @@ export interface WindowApi {
     set: (pin: string) => Promise<{ success: boolean }>
     disable: () => Promise<{ success: boolean }>
   }
+  platform: string
+  tray: {
+    updatePomodoro: (timeLeftFormatted: string | null, isRunning: boolean) => Promise<{ success: boolean }>
+  }
+  badge: {
+    updateDock: (count: number) => Promise<{ success: boolean }>
+    updateProgress: (progress: number) => Promise<{ success: boolean }>
+  }
   onEmergencyActivated: (callback: () => void) => void
+  onQuickAdd: (callback: () => void) => void
 }
 
 // ─── Settings Types ──────────────────────────────────────────────
@@ -193,11 +214,18 @@ export interface AppSettings {
   language?: string
   compactMode?: boolean
   emergencyButton?: boolean
+  emergencyButtonVisible?: boolean
   accentColor?: string
   morningReminder?: string
+  morningReminderAt?: string | null
   eveningReminder?: string
+  eveningReminderAt?: string | null
   showSensitiveContent?: boolean
   pinEnabled?: boolean
+  pinHash?: string | null
+  notificationsOn?: boolean
+  lastBackupAt?: string | Date | null
+  backupPath?: string | null
   [key: string]: unknown
 }
 
@@ -230,4 +258,16 @@ export interface RecoverySummary {
 export interface JournalStreakData {
   streak: number
   totalEntries: number
+}
+
+export interface TaskWeekDayStats {
+  date: string
+  completedTasks: number
+  pomodoroCount: number
+}
+
+export interface TaskWeekStats {
+  totalCompleted: number
+  totalPomodoro: number
+  byDay: TaskWeekDayStats[]
 }

@@ -19,5 +19,9 @@ export function registerAnalyticsHandlers(): void {
     return analyticsService.getJournalStreak()
   })
 
+  ipcMain.handle('analytics:getTaskWeekStats', async (_event, days?: number) => {
+    return analyticsService.getTaskWeekStats(days ?? 7)
+  })
+
   console.log('[IPC] Analytics handlers registered')
 }

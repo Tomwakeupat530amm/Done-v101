@@ -1,7 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Clock, Calendar, Edit2, Trash2, Trophy, AlertCircle } from 'lucide-react'
 import type { Goal } from '../../../../shared/types/goal.types'
 import { format, isPast, isToday, differenceInDays } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi, enUS } from 'date-fns/locale'
 
 interface GoalCardProps {
   goal: Goal
@@ -20,6 +21,8 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
 }
 
 export function GoalCard({ goal, onEdit, onDelete, onComplete, onExtend }: GoalCardProps) {
+  const { t, i18n } = useTranslation()
+  const dateLocale = i18n.language === 'vi' ? vi : enUS
   const target = new Date(goal.targetDate)
   const isCompleted = goal.status === 'COMPLETED'
   const isDueToday = isToday(target)
@@ -27,6 +30,16 @@ export function GoalCard({ goal, onEdit, onDelete, onComplete, onExtend }: GoalC
   const daysDiff = Math.abs(differenceInDays(target, new Date()))
 
   const catStyle = CATEGORY_COLORS[goal.category] || CATEGORY_COLORS.GENERAL
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case 'RECOVERY': return t('goals.catRecovery')
+      case 'HEALTH': return t('goals.catHealth')
+      case 'CAREER': return t('goals.catCareer')
+      case 'PERSONAL': return t('goals.catPersonal')
+      case 'GENERAL': default: return t('goals.catGeneral')
+    }
+  }
 
   return (
     <div
@@ -43,7 +56,7 @@ export function GoalCard({ goal, onEdit, onDelete, onComplete, onExtend }: GoalC
       {/* Top row: Category and Actions */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}>
-          {goal.category}
+          {getCategoryLabel(goal.category)}
         </span>
 
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -52,14 +65,14 @@ export function GoalCard({ goal, onEdit, onDelete, onComplete, onExtend }: GoalC
               <button
                 onClick={() => onComplete(goal.id)}
                 className="p-1.5 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer"
-                title="Đánh dấu đã hoàn thành"
+                title={t('goals.markCompleteTip')}
               >
                 <CheckCircle2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => onExtend(goal)}
                 className="p-1.5 text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
-                title="Gia hạn thời gian"
+                title={t('goals.extendTip')}
               >
                 <Clock className="w-4 h-4" />
               </button>
@@ -68,18 +81,18 @@ export function GoalCard({ goal, onEdit, onDelete, onComplete, onExtend }: GoalC
           <button
             onClick={() => onEdit(goal)}
             className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-overlay rounded-lg transition-colors cursor-pointer"
-            title="Chỉnh sửa mục tiêu"
+            title={t('goals.editTip')}
           >
             <Edit2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => {
-              if (window.confirm('Bạn có chắc chắn muốn xóa mục tiêu này?')) {
+              if (window.confirm(t('goals.confirmDelete'))) {
                 onDelete(goal.id)
               }
             }}
             className="p-1.5 text-text-muted hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-            title="Xóa mục tiêu"
+            title={t('goals.deleteTip')}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -105,27 +118,27 @@ export function GoalCard({ goal, onEdit, onDelete, onComplete, onExtend }: GoalC
       <div className="pt-3 mt-2 border-t border-white/5 flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 text-text-secondary">
           <Calendar className="w-3.5 h-3.5 text-text-muted" />
-          <span>Hạn: {format(target, 'dd/MM/yyyy', { locale: vi })}</span>
+          <span>{t('goals.due')}: {format(target, 'dd/MM/yyyy', { locale: dateLocale })}</span>
         </div>
 
         {isCompleted ? (
           <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Đã đạt được
+            {t('goals.achieved')}
           </span>
         ) : isDueToday ? (
           <span className="text-xs font-bold text-amber-400 flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 animate-pulse">
             <AlertCircle className="w-3.5 h-3.5" />
-            Đến hạn hôm nay!
+            {t('goals.dueToday')}
           </span>
         ) : isOverdue ? (
           <span className="text-xs font-semibold text-rose-400 flex items-center gap-1">
-            Quá hạn {daysDiff} ngày
+            {t('goals.overdueDays', { days: daysDiff })}
           </span>
         ) : (
           <span className="text-xs text-indigo-400 font-medium flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
-            Còn {daysDiff} ngày
+            {t('goals.daysLeft', { days: daysDiff })}
           </span>
         )}
       </div>

@@ -88,6 +88,21 @@ export class TaskService {
       }
     });
   }
+
+  async getCompletedTasksByDate(dateStr: string) {
+    const startOfDay = new Date(`${dateStr}T00:00:00.000`);
+    const endOfDay = new Date(`${dateStr}T23:59:59.999`);
+    return prisma.task.findMany({
+      where: {
+        status: 'DONE',
+        completedAt: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      },
+      orderBy: { completedAt: 'desc' }
+    });
+  }
 }
 
 export const taskService = new TaskService();

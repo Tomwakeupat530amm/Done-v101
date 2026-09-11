@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trophy, Calendar, CheckCircle2, Clock, X, Sparkles, ArrowRight } from 'lucide-react'
 import type { Goal } from '../../../../shared/types/goal.types'
 import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi, enUS } from 'date-fns/locale'
 import { playTingSound } from '../../lib/sound'
 
 interface DueGoalModalProps {
@@ -15,6 +16,8 @@ interface DueGoalModalProps {
 }
 
 export function DueGoalModal({ goal, isOpen, onClose, onComplete, onExtend }: DueGoalModalProps) {
+  const { t, i18n } = useTranslation()
+  const dateLocale = i18n.language === 'vi' ? vi : enUS
   const [isExtending, setIsExtending] = useState(false)
   const [newDate, setNewDate] = useState(() => {
     const d = new Date()
@@ -25,7 +28,7 @@ export function DueGoalModal({ goal, isOpen, onClose, onComplete, onExtend }: Du
 
   if (!isOpen || !goal) return null
 
-  const targetFormatted = format(new Date(goal.targetDate), 'dd/MM/yyyy', { locale: vi })
+  const targetFormatted = format(new Date(goal.targetDate), 'dd/MM/yyyy', { locale: dateLocale })
 
   const handleComplete = async () => {
     setIsProcessing(true)
@@ -78,11 +81,11 @@ export function DueGoalModal({ goal, isOpen, onClose, onComplete, onExtend }: Du
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider mb-2">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Mốc Thời Gian Quan Trọng</span>
+            <span>{t('goals.milestoneBadge')}</span>
           </div>
 
           <h2 className="text-2xl font-extrabold text-white mb-2">
-            Đã Đến Hạn Hoàn Thành Mục Tiêu!
+            {t('goals.headingDue')}
           </h2>
 
           <div className="p-4 rounded-2xl bg-surface-raised border border-white/5 my-4 text-left">
@@ -94,12 +97,12 @@ export function DueGoalModal({ goal, isOpen, onClose, onComplete, onExtend }: Du
             )}
             <div className="flex items-center gap-2 text-xs text-amber-300/80">
               <Calendar className="w-3.5 h-3.5" />
-              <span>Hạn chót đã định: {targetFormatted}</span>
+              <span>{t('goals.deadlineNotice')}: {targetFormatted}</span>
             </div>
           </div>
 
           <p className="text-sm text-text-secondary mb-6">
-            Hôm nay là ngày bạn đã đặt mục tiêu đạt được cột mốc này. Hãy tự hào về hành trình đã qua và đưa ra quyết định của bạn nhé!
+            {t('goals.questionPrompt')}
           </p>
 
           {!isExtending ? (
@@ -110,7 +113,7 @@ export function DueGoalModal({ goal, isOpen, onClose, onComplete, onExtend }: Du
                 className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer transform active:scale-98"
               >
                 <CheckCircle2 className="w-5 h-5" />
-                <span>Tôi Đã Hoàn Thành Mục Tiêu Này! 🎉</span>
+                <span>{t('goals.btnMarkDone')}</span>
               </button>
 
               <button
@@ -118,21 +121,21 @@ export function DueGoalModal({ goal, isOpen, onClose, onComplete, onExtend }: Du
                 className="w-full py-2.5 px-4 rounded-xl bg-surface-overlay hover:bg-surface-raised text-text-primary font-semibold flex items-center justify-center gap-2 border border-white/10 transition-colors cursor-pointer text-sm"
               >
                 <Clock className="w-4 h-4 text-amber-400" />
-                <span>Cần thêm thời gian (Gia hạn ngày mới)</span>
+                <span>{t('goals.btnExtendOption')}</span>
               </button>
 
               <button
                 onClick={onClose}
                 className="text-xs text-text-muted hover:text-text-secondary pt-1 cursor-pointer"
               >
-                Nhắc nhở tôi vào lần sau
+                {t('goals.cancelBtn')}
               </button>
             </div>
           ) : (
             <form onSubmit={handleExtend} className="space-y-4 text-left">
               <div className="p-4 rounded-xl bg-surface-overlay border border-white/5 space-y-2">
                 <label className="block text-xs font-semibold text-text-primary">
-                  Chọn ngày hoàn thành mới:
+                  {t('goals.extendNewDateLabel')}
                 </label>
                 <input
                   type="date"
@@ -149,15 +152,15 @@ export function DueGoalModal({ goal, isOpen, onClose, onComplete, onExtend }: Du
                   disabled={isProcessing}
                   className="flex-1 py-2.5 px-4 rounded-xl bg-brand hover:bg-brand-dim text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-brand/20 transition-all cursor-pointer"
                 >
-                  <span>Lưu Hạn Mới</span>
+                  <span>{isProcessing ? t('goals.btnExtending') : t('goals.btnConfirmExtend')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsExtending(false)}
-                  className="py-2.5 px-4 rounded-xl bg-surface-overlay text-text-secondary hover:text-white text-sm transition-colors"
+                  className="py-2.5 px-4 rounded-xl bg-surface-overlay text-text-secondary hover:text-white text-sm transition-colors cursor-pointer"
                 >
-                  Quay lại
+                  {t('goals.cancelBtn')}
                 </button>
               </div>
             </form>

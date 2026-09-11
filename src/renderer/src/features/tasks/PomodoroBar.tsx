@@ -60,6 +60,18 @@ export function PomodoroBar() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Synchronize Pomodoro countdown with macOS Menu Bar / System Tray and Taskbar Progress
+  useEffect(() => {
+    if (window.api?.tray?.updatePomodoro) {
+      const timeStr = isRunning ? formatTime(timeLeft) : null
+      window.api.tray.updatePomodoro(timeStr, isRunning).catch(() => {})
+    }
+    if (window.api?.badge?.updateProgress) {
+      const progress = isRunning && totalDuration > 0 ? (totalDuration - timeLeft) / totalDuration : -1
+      window.api.badge.updateProgress(progress).catch(() => {})
+    }
+  }, [isRunning, timeLeft, totalDuration])
+
   const handleSaveCustom = (e: React.FormEvent) => {
     e.preventDefault()
     setCustomTime(tempWork, tempBreak)

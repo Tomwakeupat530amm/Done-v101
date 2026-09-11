@@ -26,6 +26,9 @@ function getDatabaseUrl(): string {
 
   // In production, use the user data directory
   const userDataPath = app.getPath('userData')
+  if (!fs.existsSync(userDataPath)) {
+    fs.mkdirSync(userDataPath, { recursive: true })
+  }
   const dbPath = join(userDataPath, 'atomic-recovery.db')
 
   if (!fs.existsSync(dbPath)) {
@@ -49,6 +52,20 @@ function getDatabaseUrl(): string {
   return `file:${dbPath}`
 }
 
+function getPrismaEngineFilename(): string {
+  switch (process.platform) {
+    case 'win32':
+      return 'query_engine-windows.dll.node'
+    case 'darwin':
+      return process.arch === 'arm64'
+        ? 'libquery_engine-darwin-arm64.dylib.node'
+        : 'libquery_engine-darwin.dylib.node'
+    case 'linux':
+    default:
+      return 'libquery_engine-linux-musl.so.node'
+  }
+}
+
 // Singleton instance
 let _prisma: PrismaClient | null = null
 
@@ -56,10 +73,11 @@ export function getPrismaClient(): PrismaClient {
   if (!_prisma) {
     const databaseUrl = getDatabaseUrl()
     
-    // Explicitly configure engine path for production
+    // Explicitly configure engine path for production cross-platform
+    const engineFilename = getPrismaEngineFilename()
     const enginePath = is.dev 
-      ? join(process.cwd(), 'node_modules', '.prisma', 'client', 'query_engine-windows.dll.node')
-      : join(process.resourcesPath, 'node_modules', '.prisma', 'client', 'query_engine-windows.dll.node')
+      ? join(process.cwd(), 'node_modules', '.prisma', 'client', engineFilename)
+      : join(process.resourcesPath, 'node_modules', '.prisma', 'client', engineFilename)
       
     if (!is.dev) {
       process.env.PRISMA_QUERY_ENGINE_LIBRARY = enginePath

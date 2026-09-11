@@ -3,9 +3,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useLockStore } from '../stores/lockStore'
 import { useTranslation } from 'react-i18next'
+import logoImg from '../assets/logo.png'
 
 export function LockScreen() {
   const [pin, setPin] = useState('')
@@ -55,10 +56,10 @@ export function LockScreen() {
       >
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-            <Shield className="w-8 h-8 text-indigo-400" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-white/10 flex items-center justify-center mb-4">
+            <img src={logoImg} alt="Done" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t('lockScreen.title', 'Atomic Recovery')}</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t('lockScreen.title', 'Done')}</h1>
           <p className="text-sm text-[var(--color-text-muted)] mt-1">{t('lockScreen.prompt', 'Nhập PIN để mở khoá')}</p>
         </div>
 
