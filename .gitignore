@@ -10,3 +10,14 @@ out
 .eslintcache
 *.log*
 
+# Vibecode Pro Max Kit
+.agents/
+.claude/
+.codex/
+.vibecode-backup/
+process/
+AGENTS.md
+CLAUDE.md
+.vc-installed-files
+.vc-version
+
