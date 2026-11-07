@@ -2,6 +2,7 @@
 import { Tray, Menu, nativeImage, app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import * as fs from 'fs'
+import { widgetService } from './widget.service'
 
 export class TrayService {
   private tray: Tray | null = null
@@ -55,11 +56,7 @@ export class TrayService {
   toggleMainWindow(): void {
     if (!this.mainWindow || this.mainWindow.isDestroyed()) return
     if (this.mainWindow.isVisible() && !this.mainWindow.isMinimized()) {
-      if (process.platform === 'darwin') {
-        this.mainWindow.hide()
-      } else {
-        this.mainWindow.minimize()
-      }
+      widgetService.minimizeToWidget(this.mainWindow)
     } else {
       this.showMainWindow()
     }
@@ -102,6 +99,10 @@ export class TrayService {
           this.showMainWindow()
           this.mainWindow?.webContents.send('emergency:activated')
         }
+      },
+      {
+        label: 'Hiện/Ẩn widget task',
+        click: () => widgetService.toggle()
       },
       { type: 'separator' },
       {

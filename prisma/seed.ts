@@ -3,12 +3,23 @@
 // Creates singleton rows required on first run
 
 import { PrismaClient } from '@prisma/client'
-import { join } from 'path'
+import { join, isAbsolute } from 'path'
+
+// Honor DATABASE_URL (e.g. scripts/build-db.js seeds prod.db); relative paths resolve against /prisma
+function resolveDatabaseUrl(): string {
+  const envUrl = process.env.DATABASE_URL
+  if (envUrl && envUrl.startsWith('file:')) {
+    const target = envUrl.slice('file:'.length)
+    const abs = isAbsolute(target) ? target : join(process.cwd(), 'prisma', target)
+    return `file:${abs}`
+  }
+  return `file:${join(process.cwd(), 'prisma', 'dev.db')}`
+}
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: `file:${join(process.cwd(), 'prisma', 'dev.db')}`
+      url: resolveDatabaseUrl()
     }
   }
 })

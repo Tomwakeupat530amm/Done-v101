@@ -29,6 +29,11 @@
                 "emergency":  "Khẩn cấp"
             },
     "settings":  {
+        "widgetAutoLaunch":  "Tự chạy cùng máy",
+        "widgetAutoLaunchSub":  "Mở máy là widget task hiện ngay, cửa sổ chính được ẩn",
+        "widgetAutoLaunchUnsupported":  "Chỉ khả dụng trên bản cài đặt Windows/macOS",
+        "widgetPinned":  "Widget luôn nổi trên cùng",
+        "widgetPinnedSub":  "Giữ widget task phía trên các cửa sổ khác",
                      "description":  "Tuỳ chỉnh Done theo ý muốn của bạn.",
                      "appearance":  "Giao diện",
                      "accentColor":  "Màu nhấn",
@@ -390,5 +395,22 @@
         "action4": "Đi bộ quanh nhà 3 vòng",
         "action5": "Rửa mặt bằng nước lạnh",
         "action6": "Nhắn tin cho accountability partner"
+    },
+    "widget": {
+        "title": "Task hôm nay",
+        "open": "{{count}} việc còn lại",
+        "doneToday": "Đã xong hôm nay",
+        "overdue": "Tồn đọng từ hôm qua",
+        "today": "Hôm nay",
+        "empty": "Không còn việc nào. Tuyệt vời!",
+        "addPlaceholder": "Thêm việc mới...",
+        "add": "Thêm",
+        "complete": "Hoàn thành",
+        "inProgress": "Đang làm",
+        "daysLate": "{{count}} ngày trước",
+        "pin": "Ghim lên trên cùng",
+        "unpin": "Bỏ ghim",
+        "openApp": "Mở Done",
+        "hide": "Ẩn widget"
     }
 }

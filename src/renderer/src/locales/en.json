@@ -29,6 +29,11 @@
                 "emergency":  "Emergency"
             },
     "settings":  {
+        "widgetAutoLaunch":  "Launch at startup",
+        "widgetAutoLaunchSub":  "The task widget appears when you turn on your computer; the main window stays hidden",
+        "widgetAutoLaunchUnsupported":  "Only available in the installed Windows/macOS app",
+        "widgetPinned":  "Widget always on top",
+        "widgetPinnedSub":  "Keep the task widget above other windows",
                      "description":  "Customize Done to your preference.",
                      "appearance":  "Appearance",
                      "accentColor":  "Accent Color",
@@ -390,5 +395,22 @@
         "action4": "Walk around the house 3 times",
         "action5": "Wash your face with cold water",
         "action6": "Text an accountability partner"
+    },
+    "widget": {
+        "title": "Today's tasks",
+        "open": "{{count}} left",
+        "doneToday": "Done today",
+        "overdue": "Overdue from yesterday",
+        "today": "Today",
+        "empty": "Nothing left. Great job!",
+        "addPlaceholder": "Add a task...",
+        "add": "Add",
+        "complete": "Complete",
+        "inProgress": "In progress",
+        "daysLate": "{{count}} day(s) ago",
+        "pin": "Pin on top",
+        "unpin": "Unpin",
+        "openApp": "Open Done",
+        "hide": "Hide widget"
     }
 }

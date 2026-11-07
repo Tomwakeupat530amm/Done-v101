@@ -11,10 +11,12 @@ import { disconnectPrisma, getPrismaClient } from './database/prisma.client'
 import { notificationService } from './services/notification.service'
 import { trayService } from './services/tray.service'
 import { quickAddService } from './services/quick-add.service'
+import { widgetService } from './services/widget.service'
 
 import { registerEmergencyShortcut, unregisterEmergencyShortcut } from './ipc/emergency.handler'
 
 let mainWindow: BrowserWindow | null = null
+let launchedHidden = false
 const isMac = process.platform === 'darwin'
 
 function setupApplicationMenu(): void {
@@ -103,11 +105,33 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow?.show()
+    if (launchedHidden) {
+      // Started at login: keep the main window hidden, only show the task widget
+      launchedHidden = false
+      widgetService.show()
+    } else {
+      mainWindow?.show()
+    }
+  })
+
+  // Main window visible again → the widget would be redundant
+  mainWindow.on('show', () => widgetService.hide())
+  mainWindow.on('restore', () => widgetService.hide())
+
+  // Minimize via keyboard / OS (Win+Down, mac yellow button) behaves like the custom button
+  mainWindow.on('minimize', () => {
+    if (process.platform === 'darwin') {
+      widgetService.show()
+    } else {
+      // Not cancelable: hide right after Windows minimizes it (show paths call restore() first)
+      widgetService.minimizeToWidget(mainWindow)
+    }
   })
 
   mainWindow.on('closed', () => {
     mainWindow = null
+    // Closing the main window closes the widget too (otherwise window-all-closed never fires)
+    widgetService.destroy()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -207,7 +231,7 @@ if (!gotTheLock) {
   }
 
   // Register all IPC handlers before creating window
-  registerAllIpcHandlers()
+  registerAllIpcHandlers(() => mainWindow)
 
   // Start background notifications
   notificationService.start()
@@ -216,6 +240,7 @@ if (!gotTheLock) {
     optimizer.watchWindowShortcuts(window)
   })
 
+  launchedHidden = widgetService.wasLaunchedHidden()
   setupApplicationMenu()
   createWindow()
 
@@ -247,6 +272,7 @@ app.on('will-quit', () => {
   unregisterEmergencyShortcut()
   quickAddService.unregister()
   trayService.destroy()
+  widgetService.destroy()
 })
 
 app.on('window-all-closed', () => {

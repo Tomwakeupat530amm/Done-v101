@@ -175,6 +175,7 @@ export interface WindowApi {
   task: {
     getAll: () => Promise<import('./task.types').Task[]>
     getDashboardTasks: () => Promise<import('./task.types').Task[]>
+    getWidgetTasks: () => Promise<WidgetTasks>
     create: (dto: import('./task.types').CreateTaskDto) => Promise<import('./task.types').Task>
     update: (id: string, dto: import('./task.types').UpdateTaskDto) => Promise<import('./task.types').Task>
     delete: (id: string) => Promise<void>
@@ -190,6 +191,14 @@ export interface WindowApi {
     markCompleted: (id: string) => Promise<import('./goal.types').Goal>
     extendTargetDate: (id: string, newTargetDate: string) => Promise<import('./goal.types').Goal>
     markNotified: (id: string) => Promise<import('./goal.types').Goal>
+  }
+  widget: {
+    hide: () => Promise<void>
+    openMain: () => Promise<void>
+    getPinned: () => Promise<boolean>
+    togglePin: () => Promise<boolean>
+    getAutoLaunch: () => Promise<{ supported: boolean; enabled: boolean }>
+    setAutoLaunch: (enabled: boolean) => Promise<{ supported: boolean; enabled: boolean }>
   }
   pin: {
     isEnabled: () => Promise<boolean>
@@ -207,6 +216,14 @@ export interface WindowApi {
   }
   onEmergencyActivated: (callback: () => void) => void
   onQuickAdd: (callback: () => void) => void
+  onTasksChanged: (callback: () => void) => () => void
+}
+
+// ─── Widget Types ────────────────────────────────────────────────
+export interface WidgetTasks {
+  overdue: import('./task.types').Task[]
+  today: import('./task.types').Task[]
+  doneToday: number
 }
 
 // ─── Settings Types ──────────────────────────────────────────────

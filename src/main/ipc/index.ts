@@ -13,10 +13,12 @@ import { registerPinHandlers } from './pin.handler'
 import { registerTaskHandlers } from './task.handler'
 import { registerGoalHandlers } from './goal.handler'
 import { registerSystemHandlers } from './system.handler'
+import { registerWidgetHandlers } from './widget.handler'
+import { widgetService } from '../services/widget.service'
 
 import { BrowserWindow } from 'electron'
 
-export function registerAllIpcHandlers(): void {
+export function registerAllIpcHandlers(getMainWindow: () => BrowserWindow | null): void {
   ipcMain.removeHandler('ping')
   ipcMain.handle('ping', () => 'pong')
 
@@ -24,7 +26,8 @@ export function registerAllIpcHandlers(): void {
   ipcMain.removeHandler('window:minimize')
   ipcMain.handle('window:minimize', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    win?.minimize()
+    // Minimize hides the main window and shows the floating task widget instead
+    widgetService.minimizeToWidget(win)
   })
   ipcMain.removeHandler('window:maximize')
   ipcMain.handle('window:maximize', (event) => {
@@ -55,6 +58,7 @@ export function registerAllIpcHandlers(): void {
   registerTaskHandlers()
   registerGoalHandlers()
   registerSystemHandlers()
+  registerWidgetHandlers(getMainWindow)
   
   console.log('[IPC] All handlers registered')
 }

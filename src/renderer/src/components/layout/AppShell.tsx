@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { TitleBar } from './TitleBar'
 import { Sidebar } from './Sidebar'
@@ -14,6 +14,7 @@ import type { DailyAccomplishmentSummary } from '../../../../shared/types/daily-
 
 export function AppShell() {
   const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const queryClient = useQueryClient()
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: () => window.api.settings.get()
@@ -28,6 +29,14 @@ export function AppShell() {
     queryKey: ['tasks'],
     queryFn: () => window.api.task.getAll()
   })
+
+  // Tasks changed from the floating widget → refresh Kanban + daily summary
+  useEffect(() => {
+    return window.api.onTasksChanged(() => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['dailySummary'] })
+    })
+  }, [queryClient])
 
   // Synchronize active tasks count with macOS Dock badge
   useEffect(() => {

@@ -42,6 +42,13 @@ asarUnpack:
 win:
   executableName: done
   icon: build/icon.png
+  target:
+    - target: nsis
+      arch: x64
+    - target: portable
+      arch: x64
+portable:
+  artifactName: ${productName}-Portable-${version}.${ext}
 nsis:
   artifactName: ${productName}-Setup-${version}.${ext}
   shortcutName: ${productName}

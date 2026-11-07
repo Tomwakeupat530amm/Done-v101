@@ -66,6 +66,15 @@ export default function SettingsPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [isTestingNotif, setIsTestingNotif] = useState(false)
 
+  const { data: autoLaunch, refetch: refetchAutoLaunch } = useQuery({
+    queryKey: ['widgetAutoLaunch'],
+    queryFn: () => window.api.widget.getAutoLaunch()
+  })
+  const { data: widgetPinned, refetch: refetchWidgetPinned } = useQuery({
+    queryKey: ['widgetPinned'],
+    queryFn: () => window.api.widget.getPinned()
+  })
+
   const { data: settings } = useQuery<AppSettings>({
     queryKey: ['settings'],
     queryFn: () => window.api.settings.get()
@@ -272,6 +281,37 @@ export default function SettingsPage() {
 
         <Row label={t('settings.compactMode', 'Chế độ Thu gọn')} sub={t('settings.compactModeSub', 'Giao diện gọn gàng, tiết kiệm không gian')}>
           <Toggle value={!!settings.compactMode} onChange={handleCompactModeToggle} />
+        </Row>
+
+        <Row
+          label={t('settings.widgetAutoLaunch', 'Tự chạy cùng máy')}
+          sub={
+            autoLaunch?.supported === false
+              ? t('settings.widgetAutoLaunchUnsupported', 'Chỉ khả dụng trên bản cài đặt Windows/macOS')
+              : t('settings.widgetAutoLaunchSub', 'Mở máy là widget task hiện ngay, cửa sổ chính được ẩn')
+          }
+        >
+          <Toggle
+            value={!!autoLaunch?.enabled}
+            onChange={async (v) => {
+              if (autoLaunch?.supported === false) return
+              await window.api.widget.setAutoLaunch(v)
+              refetchAutoLaunch()
+            }}
+          />
+        </Row>
+
+        <Row
+          label={t('settings.widgetPinned', 'Widget luôn nổi trên cùng')}
+          sub={t('settings.widgetPinnedSub', 'Giữ widget task phía trên các cửa sổ khác')}
+        >
+          <Toggle
+            value={!!widgetPinned}
+            onChange={async (v) => {
+              if (v !== !!widgetPinned) await window.api.widget.togglePin()
+              refetchWidgetPinned()
+            }}
+          />
         </Row>
       </Section>
 

@@ -83,6 +83,7 @@ const api = {
   task: {
     getAll: () => ipcRenderer.invoke('task:getAll'),
     getDashboardTasks: () => ipcRenderer.invoke('task:getDashboardTasks'),
+    getWidgetTasks: () => ipcRenderer.invoke('task:getWidgetTasks'),
     create: (dto: import('../shared/types/task.types').CreateTaskDto) => ipcRenderer.invoke('task:create', dto),
     update: (id: string, dto: import('../shared/types/task.types').UpdateTaskDto) => ipcRenderer.invoke('task:update', { id, dto }),
     delete: (id: string) => ipcRenderer.invoke('task:delete', id),
@@ -98,6 +99,14 @@ const api = {
     markCompleted: (id: string) => ipcRenderer.invoke('goal:markCompleted', id),
     extendTargetDate: (id: string, newTargetDate: string) => ipcRenderer.invoke('goal:extendTargetDate', { id, newTargetDate }),
     markNotified: (id: string) => ipcRenderer.invoke('goal:markNotified', id)
+  },
+  widget: {
+    hide: () => ipcRenderer.invoke('widget:hide'),
+    openMain: () => ipcRenderer.invoke('widget:openMain'),
+    getPinned: () => ipcRenderer.invoke('widget:getPinned'),
+    togglePin: () => ipcRenderer.invoke('widget:togglePin'),
+    getAutoLaunch: () => ipcRenderer.invoke('widget:getAutoLaunch'),
+    setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('widget:setAutoLaunch', enabled)
   },
   pin: {
     isEnabled: () => ipcRenderer.invoke('pin:isEnabled'),
@@ -120,6 +129,13 @@ const api = {
   // ─── Events ──────────────────────────────────────────────────
   onEmergencyActivated: (callback: () => void) => {
     ipcRenderer.on('emergency:activated', () => callback())
+  },
+  onTasksChanged: (callback: () => void) => {
+    const listener = (): void => callback()
+    ipcRenderer.on('tasks:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('tasks:changed', listener)
+    }
   },
   onQuickAdd: (callback: () => void) => {
     ipcRenderer.on('quick-add:open', () => callback())

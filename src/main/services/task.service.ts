@@ -34,6 +34,33 @@ export class TaskService {
     });
   }
 
+  // Tasks for the floating widget: overdue (created before today, not done) + today's open tasks
+  async getWidgetTasks() {
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+
+    const [open, doneToday] = await Promise.all([
+      prisma.task.findMany({
+        where: { status: { in: ['TODO', 'IN_PROGRESS'] } },
+        orderBy: { order: 'asc' }
+      }),
+      prisma.task.count({
+        where: { status: 'DONE', completedAt: { gte: startOfToday } }
+      })
+    ])
+
+    const weight: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 }
+    const sorted = [...open].sort(
+      (a, b) => (weight[a.priority] ?? 1) - (weight[b.priority] ?? 1) || a.order - b.order
+    )
+
+    return {
+      overdue: sorted.filter((t) => t.createdAt < startOfToday),
+      today: sorted.filter((t) => t.createdAt >= startOfToday),
+      doneToday
+    }
+  }
+
   async create(data: CreateTaskDto) {
     const isDone = data.status === 'DONE';
     return prisma.task.create({
